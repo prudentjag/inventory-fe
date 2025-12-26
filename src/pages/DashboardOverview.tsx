@@ -8,16 +8,15 @@ import {
   CartesianGrid,
 } from "recharts";
 import {
-  TrendingUp,
-  Package,
-  Users,
-  AlertTriangle,
-  ArrowRight,
+ArrowRight,
   ShoppingCart,
+  Package,
 } from "lucide-react";
+import { Skeleton } from "../components/ui/Skeleton";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { MOCK_PRODUCTS, MOCK_USERS } from "../services/mockData";
+import { useDashboardStats } from "../data/dashboard";
+import { formatStatLabel, formatStatValue, getStatIcon, getStatBgClass } from "../lib/dashboardUtils";
 
 // Mock Chart Data
 const SALES_DATA = [
@@ -33,11 +32,74 @@ const SALES_DATA = [
 export default function DashboardOverview() {
   const { user } = useAuth();
 
-  // Derived Stats
-  const lowStockCount = MOCK_PRODUCTS.filter(
-    (p) => p.stock_quantity < 10
-  ).length;
-  const totalStaff = MOCK_USERS.length;
+  const { data: statsData, isLoading } = useDashboardStats();
+
+  const stats = statsData;
+
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-5 w-64" />
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-36" />
+          </div>
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                </div>
+                <Skeleton className="h-10 w-10 rounded-lg" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chart Skeleton */}
+          <div className="lg:col-span-2 bg-card rounded-xl border border-border shadow-sm p-6">
+            <div className="flex justify-between items-center mb-6">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-8 w-32" />
+            </div>
+            <Skeleton className="h-[300px] w-full" />
+          </div>
+
+          {/* Recent Activity Skeleton */}
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6 flex flex-col h-full">
+            <Skeleton className="h-6 w-40 mb-6" />
+            <div className="space-y-4 flex-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <div className="flex gap-3 items-center">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -73,38 +135,22 @@ export default function DashboardOverview() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Revenue"
-          value="₦504,000"
-          trend="+12.5%"
-          trendUp={true}
-          icon={<TrendingUp className="text-green-600" size={24} />}
-          bgClass="bg-green-100 dark:bg-green-900/20"
-        />
-        <StatCard
-          title="Active Orders"
-          value="24"
-          trend="+4"
-          trendUp={true}
-          icon={<ShoppingCart className="text-blue-600" size={24} />}
-          bgClass="bg-blue-100 dark:bg-blue-900/20"
-        />
-        <StatCard
-          title="Low Stock Alerts"
-          value={lowStockCount.toString()}
-          trend="Needs Attention"
-          trendUp={false}
-          icon={<AlertTriangle className="text-orange-600" size={24} />}
-          bgClass="bg-orange-100 dark:bg-orange-900/20"
-        />
-        <StatCard
-          title="Active Staff"
-          value={totalStaff.toString()}
-          trend="All Systems Normal"
-          trendUp={true}
-          icon={<Users className="text-purple-600" size={24} />}
-          bgClass="bg-purple-100 dark:bg-purple-900/20"
-        />
+        {stats && Object.entries(stats).map(([key, value]) => {
+          if (key === 'role') return null;
+
+          return (
+            <StatCard
+              key={key}
+              title={formatStatLabel(key)}
+              value={formatStatValue(key, value as number)}
+              trend="Auto Updated"
+              trendUp={true}
+              icon={getStatIcon(key)}
+              bgClass={getStatBgClass(key)}
+            />
+          );
+        })}
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -215,11 +261,10 @@ function StatCard({ title, value, trend, trendUp, icon, bgClass }: any) {
       </div>
       <div>
         <span
-          className={`text-xs font-medium px-2 py-1 rounded-full ${
-            trendUp
-              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-          }`}
+          className={`text-xs font-medium px-2 py-1 rounded-full ${trendUp
+            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+            : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+            }`}
         >
           {trend}
         </span>

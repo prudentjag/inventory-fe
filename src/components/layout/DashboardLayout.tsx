@@ -67,7 +67,7 @@ export default function DashboardLayout() {
             isOpen={isSidebarOpen}
           />
 
-          {["super_admin", "unit_manager"].includes(user?.role || "") && (
+          {["admin", "manager"].includes(user?.role || "") && (
             <>
               <NavItem
                 to="/dashboard/inventory"
@@ -81,10 +81,16 @@ export default function DashboardLayout() {
                 label="Staff"
                 isOpen={isSidebarOpen}
               />
+              <NavItem
+                to="/dashboard/units"
+                icon={<Store size={20} />}
+                label="Units"
+                isOpen={isSidebarOpen}
+              />
             </>
           )}
 
-          {user?.role === "super_admin" && (
+          {user?.role === "admin" && (
             <NavItem
               to="/dashboard/settings"
               icon={<Settings size={20} />}

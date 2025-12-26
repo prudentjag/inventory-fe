@@ -9,7 +9,7 @@ interface InvoiceModalProps {
   onOpenChange: (open: boolean) => void;
   cart: CartItem[];
   cartTotal: number;
-  paymentMethod: "cash" | "transfer";
+  paymentMethod: "cash" | "transfer" | "pos";
   orderId: string;
   onClose: () => void;
 }

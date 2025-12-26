@@ -12,7 +12,7 @@ export default function PosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">(
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer"| "pos">(
     "cash"
   );
 

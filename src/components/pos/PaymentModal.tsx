@@ -13,8 +13,8 @@ interface PaymentModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   cartTotal: number;
-  paymentMethod: "cash" | "transfer";
-  setPaymentMethod: (method: "cash" | "transfer") => void;
+  paymentMethod: "cash" | "transfer" | "pos";
+  setPaymentMethod: (method: "cash" | "transfer" | "pos") => void;
   onProcessPayment: () => void;
 }
 

@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useAuth } from "../context/AuthContext";
-import { MOCK_USERS } from "../services/mockData";
 import { CustomFormInput } from "../components/form/CustomFormInput";
 
 import { toast } from "sonner";
@@ -15,16 +14,18 @@ export default function LoginPage() {
 
   const formik = useFormik({
     initialValues: {
-      email: "admin@system.com",
+      email: "",
+      password: "",
     },
     validationSchema: Yup.object({
       email: Yup.string().email("Invalid email address").required("Required"),
+      password: Yup.string().required("Required"),
     }),
     onSubmit: async (values) => {
       setError("");
       const toastId = toast.loading("Signing in...");
       try {
-        await login(values.email);
+        await login(values.email, values.password);
         toast.dismiss(toastId);
         toast.success("Welcome back!");
         navigate("/dashboard");
@@ -47,6 +48,11 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={formik.handleSubmit} className="space-y-6 mt-8">
+          {error && (
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+              {error}
+            </div>
+          )}
           <CustomFormInput
             name="email"
             label="Email Address"
@@ -54,11 +60,13 @@ export default function LoginPage() {
             placeholder="Enter your email"
           />
 
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-              {error}
-            </div>
-          )}
+          <CustomFormInput
+            name="password"
+            label="Password"
+            type="password"
+            formik={formik}
+            placeholder="Enter your password"
+          />
 
           <button
             type="submit"
@@ -67,24 +75,6 @@ export default function LoginPage() {
             Sign In
           </button>
         </form>
-
-        <div className="mt-6 pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center mb-4">
-            Demo Accounts:
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {MOCK_USERS.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => formik.setFieldValue("email", user.email)}
-                className="px-3 py-1 text-xs rounded-full bg-accent hover:bg-accent/80 transition-colors text-foreground"
-              >
-                {user.role}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

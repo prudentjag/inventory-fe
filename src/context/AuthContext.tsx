@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { User } from "../types";
-import { mockApiService } from "../services/mockData";
+import type { User, LoginData, ApiResponse } from "../types";
+import api from "../services/api";
+import { API_ENDPOINTS } from "../data/endpoints";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -17,18 +18,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check local storage or session for init
+    const token = localStorage.getItem("inv_token");
     const storedUser = localStorage.getItem("inv_user");
-    if (storedUser) {
+
+    if (token && storedUser) {
       setUser(JSON.parse(storedUser));
+      // Set token for api instance (though interceptor handles it, this is good for immediate consistency if needed)
+      // actually interceptor handles it dynamically from localStorage, so no need to set defaults here
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const user = await mockApiService.login(email);
+      // Real API call
+      const response = await api.post<ApiResponse<LoginData>>(API_ENDPOINTS.LOGIN, { email, password });
+      const { access_token, user } = response.data.data;
+
       setUser(user);
+      localStorage.setItem("inv_token", access_token);
       localStorage.setItem("inv_user", JSON.stringify(user));
     } catch (error) {
       console.error("Login failed", error);
@@ -38,9 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post(API_ENDPOINTS.LOGOUT); // Attempt to invalidate on server
+    } catch (error) {
+      // Ignore logout errors (e.g. if token already expired)
+      console.warn('Logout API call failed', error);
+    }
     setUser(null);
     localStorage.removeItem("inv_user");
+    localStorage.removeItem("inv_token");
   };
 
   return (

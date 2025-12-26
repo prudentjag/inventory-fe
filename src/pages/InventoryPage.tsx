@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
 import {
   Plus,
   Filter,
@@ -9,71 +7,32 @@ import {
   Package,
   AlertTriangle,
 } from "lucide-react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { MOCK_PRODUCTS } from "../services/mockData";
+import { Skeleton } from "../components/ui/Skeleton";
+import { useProducts } from "../data/products"; // Import hooks
+import { ProductModal } from "../components/modals/ProductModal";
 import type { Product } from "../types";
 import { cn } from "../lib/utils";
-import { CustomFormInput } from "../components/form/CustomFormInput";
 
 import { useAuth } from "../context/AuthContext";
-import { toast } from "sonner";
 
 import { DataTable, type Column } from "../components/ui/DataTable";
 
 export default function InventoryPage() {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+
+  // API Hooks
+  const { data: apiProductsData, isLoading } = useProducts();
+
+  // Use API data or empty array
+  const products = apiProductsData?.data || [];
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const canEdit = ["super_admin", "unit_manager"].includes(user?.role || "");
+  const canEdit = ["admin", "manager"].includes(user?.role || "");
 
-  // Form Logic
-  const validationSchema = Yup.object({
-    name: Yup.string().required("Required"),
-    sku: Yup.string().required("Required"),
-    brand: Yup.string().required("Required"),
-    category: Yup.string().required("Required"),
-    price: Yup.number().positive("Must be positive").required("Required"),
-    cost_price: Yup.number().positive("Must be positive").required("Required"),
-    stock_quantity: Yup.number()
-      .min(0, "Cannot be negative")
-      .required("Required"),
-    unit_of_measurement: Yup.string().required("Required"),
-  });
-
-  const formik = useFormik({
-    initialValues: editingProduct || {
-      id: "",
-      name: "",
-      sku: "",
-      brand: "",
-      category: "",
-      price: 0,
-      cost_price: 0,
-      stock_quantity: 0,
-      unit_of_measurement: "bottle",
-      image_url: "",
-    },
-    enableReinitialize: true,
-    validationSchema,
-    onSubmit: (values) => {
-      if (editingProduct) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === editingProduct.id ? { ...values, id: p.id } : p
-          )
-        );
-        toast.success("Product updated");
-      } else {
-        const newProduct = { ...values, id: `p${Date.now()}` };
-        setProducts((prev) => [...prev, newProduct]);
-        toast.success("Product created");
-      }
-      handleCloseDialog();
-    },
-  });
+  // Form Logic - Migrated to ProductModal
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
@@ -83,7 +42,6 @@ export default function InventoryPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingProduct(null);
-    formik.resetForm();
   };
 
   // derived state
@@ -229,118 +187,37 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <DataTable
-        data={filteredProducts}
-        columns={columns}
-        searchPlaceholder="Search by name, SKU, or brand..."
-        searchQuery={searchQuery}
-        onSearch={setSearchQuery}
-        actionButton={
-          canEdit && (
-            <button
-              onClick={() => setIsDialogOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
-              <Plus size={18} />
-              Add Product
-            </button>
-          )
-        }
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      ) : (
+        <DataTable
+          data={filteredProducts}
+          columns={columns}
+          searchPlaceholder="Search by name, SKU, or brand..."
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          actionButton={
+            canEdit && (
+              <button
+                onClick={() => setIsDialogOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
+              >
+                <Plus size={18} />
+                Add Product
+              </button>
+            )
+          }
+        />
+      )}
+      <ProductModal
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        product={editingProduct}
       />
-
-      {/* Add/Edit Modal */}
-      <Dialog.Root open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity" />
-          <Dialog.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 sm:rounded-lg">
-            <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-              <Dialog.Title className="text-lg font-semibold leading-none tracking-tight">
-                {editingProduct ? "Edit Product" : "Add New Product"}
-              </Dialog.Title>
-              <Dialog.Description className="text-sm text-muted-foreground">
-                {editingProduct
-                  ? "Update product details below."
-                  : "Add a new item to your global inventory."}
-              </Dialog.Description>
-            </div>
-
-            <form onSubmit={formik.handleSubmit} className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <CustomFormInput
-                  name="name"
-                  label="Product Name"
-                  formik={formik}
-                  placeholder="e.g. Star Radler"
-                />
-                <CustomFormInput
-                  name="sku"
-                  label="SKU / Barcode"
-                  formik={formik}
-                  placeholder="e.g. STR-001"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <CustomFormInput
-                  name="brand"
-                  label="Brand"
-                  formik={formik}
-                  placeholder="e.g. Star"
-                />
-                <CustomFormInput
-                  name="category"
-                  label="Category"
-                  formik={formik}
-                  placeholder="e.g. Beer"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <CustomFormInput
-                  name="cost_price"
-                  label="Cost Price"
-                  type="number"
-                  formik={formik}
-                />
-                <CustomFormInput
-                  name="price"
-                  label="Selling Price"
-                  type="number"
-                  formik={formik}
-                />
-                <CustomFormInput
-                  name="stock_quantity"
-                  label="Initial Stock"
-                  type="number"
-                  formik={formik}
-                />
-              </div>
-
-              <CustomFormInput
-                name="unit_of_measurement"
-                label="Unit (e.g. Bottle, Pack)"
-                formik={formik}
-              />
-
-              <div className="flex justify-end gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseDialog}
-                  className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-                >
-                  {editingProduct ? "Save Changes" : "Create Product"}
-                </button>
-              </div>
-            </form>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
     </div>
   );
 }

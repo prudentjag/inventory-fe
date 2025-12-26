@@ -9,6 +9,7 @@ import InventoryPage from "./pages/InventoryPage";
 import StaffPage from "./pages/StaffPage";
 import DashboardOverview from "./pages/DashboardOverview";
 import TransactionsPage from "./pages/TransactionsPage";
+import { UnitsPage } from "./pages/UnitsPage";
 
 // Placeholder Pages
 const Settings = () => <h1 className="text-2xl font-bold">System Settings</h1>;
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="pos" element={<PosPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
               <Route path="inventory" element={<InventoryPage />} />
+              <Route path="units" element={<UnitsPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
