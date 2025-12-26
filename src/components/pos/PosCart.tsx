@@ -11,10 +11,10 @@ import type { CartItem } from "../../types";
 interface PosCartProps {
   cart: CartItem[];
   cartTotal: number;
-  onUpdateQuantity: (id: string, delta: number) => void;
-  onRemoveFromCart: (id: string) => void;
+  onUpdateQuantity: (id: string | number, delta: number) => void;
+  onRemoveFromCart: (id: string | number) => void;
   onCheckout: () => void;
-  onSelectPaymentMethod: (method: "cash" | "transfer") => void;
+  onSelectPaymentMethod: (method: "cash" | "transfer" | "pos") => void;
 }
 
 export function PosCart({
@@ -26,7 +26,7 @@ export function PosCart({
   onSelectPaymentMethod,
 }: PosCartProps) {
   return (
-    <div className="w-[380px] flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden flex-shrink-0">
+    <div className="w-full lg:w-[380px] flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden flex-shrink-0">
       <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShoppingCart size={20} className="text-primary" />
@@ -116,13 +116,20 @@ export function PosCart({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             onClick={() => onSelectPaymentMethod("cash")}
             className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
           >
             <Banknote size={20} className="text-green-600" />
             <span className="text-xs font-medium">Cash</span>
+          </button>
+          <button
+            onClick={() => onSelectPaymentMethod("transfer")}
+            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
+          >
+            <CreditCard size={20} className="text-red-600" />
+            <span className="text-xs font-medium">Pos</span>
           </button>
           <button
             onClick={() => onSelectPaymentMethod("transfer")}

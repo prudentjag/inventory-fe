@@ -2,20 +2,17 @@ import { useState } from "react";
 import { Plus, MapPin, Building2 } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useUnits } from "../data/units";
-import { useUsers } from "../data/staff";
+
 import { UnitModal } from "../components/modals/UnitModal";
 import { AssignStaffModal } from "../components/modals/AssignStaffModal";
 import type { Unit } from "../types";
 
 export function UnitsPage() {
     const { data: units, isLoading } = useUnits();
-    const { data: apiUsers } = useUsers();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-
-    const users = apiUsers?.data || [];
 
     const handleAssignStaff = (unit: Unit) => {
         setSelectedUnit(unit);
@@ -25,10 +22,6 @@ export function UnitsPage() {
     const handleCloseAssignDialog = () => {
         setIsAssignDialogOpen(false);
         setSelectedUnit(null);
-    };
-
-    const getAssignedUsers = (unitId: string) => {
-        return users.filter(u => u.assigned_unit_id === unitId);
     };
 
     return (
@@ -87,7 +80,7 @@ export function UnitsPage() {
 
                             <div className="mt-4 p-4 border-t border-border">
                                 <div className="flex justify-between items-center mb-2">
-                                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Staff ({getAssignedUsers(unit.id).length})</h4>
+                                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Staff ({unit.users?.length || 0})</h4>
                                     <button
                                         onClick={() => handleAssignStaff(unit)}
                                         className="text-xs text-primary hover:underline font-medium"
@@ -96,8 +89,8 @@ export function UnitsPage() {
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
-                                    {getAssignedUsers(unit.id).length > 0 ? (
-                                        getAssignedUsers(unit.id).map(user => (
+                                    {unit.users && unit.users.length > 0 ? (
+                                        unit.users.map(user => (
                                             <span key={user.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
                                                 {user.name}
                                             </span>

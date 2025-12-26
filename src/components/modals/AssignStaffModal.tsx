@@ -4,7 +4,8 @@ import * as Yup from "yup";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFormSelect } from "../form/CustomFormSelect";
-import { useUsers, useUpdateUser } from "../../data/staff";
+import { useUsers } from "../../data/staff";
+import { useAssignStaff } from "../../data/units";
 import type { Unit } from "../../types";
 
 interface AssignStaffModalProps {
@@ -15,19 +16,18 @@ interface AssignStaffModalProps {
 
 export function AssignStaffModal({ isOpen, onClose, unit }: AssignStaffModalProps) {
     const { data: apiUsers } = useUsers();
-    const updateUserMutation = useUpdateUser();
+    const assignStaffMutation = useAssignStaff();
 
     // Filter users: 
-    // 1. Unassigned users
-    // 2. Users assigned to OTHER units (if we want to allow re-assignment, which typically yes)
-    // 3. Exclude users ALREADY assigned to THIS unit.
+    // 1. Exclude users ALREADY assigned to THIS unit using the nested users list.
     const users = apiUsers?.data || [];
 
-    const availableUsers = users.filter(user => user.assigned_unit_id !== unit?.id);
+    const assignedUserIds = new Set(unit?.users?.map(u => u.id) || []);
+    const availableUsers = users.filter(user => !assignedUserIds.has(user.id));
 
     const userOptions = availableUsers.map(u => ({
         label: `${u.name} (${u.role}) ${u.assigned_unit_id ? '- Reassign' : ''}`,
-        value: u.id
+        value: String(u.id)
     }));
 
     const validationSchema = Yup.object({
@@ -43,10 +43,10 @@ export function AssignStaffModal({ isOpen, onClose, unit }: AssignStaffModalProp
         onSubmit: (values) => {
             if (!unit) return;
 
-            updateUserMutation.mutate(
+            assignStaffMutation.mutate(
                 {
-                    id: values.user_id,
-                    data: { assigned_unit_id: unit.id }
+                    unitId: unit.id,
+                    userId: values.user_id,
                 },
                 {
                     onSuccess: () => {
@@ -99,10 +99,10 @@ export function AssignStaffModal({ isOpen, onClose, unit }: AssignStaffModalProp
                             </button>
                             <button
                                 type="submit"
-                                disabled={updateUserMutation.isPending}
+                                disabled={assignStaffMutation.isPending}
                                 className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
                             >
-                                {updateUserMutation.isPending ? (
+                                {assignStaffMutation.isPending ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : (
                                     "Assign Staff"

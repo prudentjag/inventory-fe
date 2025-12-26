@@ -1,5 +1,5 @@
 import { Search, Plus } from "lucide-react";
-import type { Product } from "../../types";
+import type { Product, Brand } from "../../types";
 import { cn } from "../../lib/utils";
 
 interface PosProductGridProps {
@@ -10,6 +10,7 @@ interface PosProductGridProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAddToCart: (product: Product) => void;
+  brandsMap?: Map<number, Brand>;
 }
 
 export function PosProductGrid({
@@ -20,7 +21,13 @@ export function PosProductGrid({
   searchQuery,
   onSearchChange,
   onAddToCart,
+  brandsMap,
 }: PosProductGridProps) {
+  // Helper to get brand image for a product
+  const getBrandImage = (product: Product): string | null | undefined => {
+    if (!brandsMap || !product.brand_id) return null;
+    return brandsMap.get(product.brand_id)?.image;
+  };
   return (
     <div className="flex-1 flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Search & Filter Header */}
@@ -66,15 +73,30 @@ export function PosProductGrid({
             className="flex flex-col text-left bg-background border border-border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all group h-fit"
           >
             <div className="aspect-square bg-secondary/50 rounded-md mb-3 flex items-center justify-center text-muted-foreground overflow-hidden relative">
-              {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-xs font-medium">{product.sku}</span>
-              )}
+              {(() => {
+                const brandImage = getBrandImage(product);
+                if (brandImage) {
+                  return (
+                    <img
+                      src={brandImage}
+                      alt={product.brand || product.name}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  );
+                }
+                if (product.image_url) {
+                  return (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  );
+                }
+                return (
+                  <span className="text-xs font-medium">{product.sku}</span>
+                );
+              })()}
               <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Plus
                   className="text-primary bg-background rounded-full p-1 shadow-sm"

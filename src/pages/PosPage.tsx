@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { MOCK_PRODUCTS } from "../services/mockData";
-import type { Product, CartItem } from "../types";
+import type { Product, CartItem, Brand } from "../types";
+import { useCategories } from "../data/categories";
+import { useProducts } from "../data/products";
+import { useBrands } from "../data/brands";
 import { PosProductGrid } from "../components/pos/PosProductGrid";
 import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
@@ -12,9 +14,9 @@ export default function PosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer"| "pos">(
-    "cash"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "transfer" | "pos"
+  >("cash");
 
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<{
@@ -23,14 +25,40 @@ export default function PosPage() {
     orderId: string;
   } | null>(null);
 
-  // Derived State
-  const categories = [
-    "All",
-    ...Array.from(new Set(MOCK_PRODUCTS.map((p) => p.category))),
-  ];
+  // API Data
+  const { data: categoriesData } = useCategories();
+  const { data: productsData } = useProducts();
+  const { data: brandsData } = useBrands();
+
+  // Build brand lookup map for efficient access
+  const brandsMap = useMemo(() => {
+    const map = new Map<number, Brand>();
+    brandsData?.forEach((brand) => map.set(brand.id, brand));
+    return map;
+  }, [brandsData]);
+
+  // Categories with "All" prepended
+  const categories = useMemo(() => {
+    const categoryNames = categoriesData?.map((c) => c.name) ?? [];
+    return ["All", ...categoryNames];
+  }, [categoriesData]);
+
+  // Products from API, with mapped category names
+  const products = useMemo(() => {
+    return (productsData?.data ?? []).map((product) => {
+      // Map category_id to category name
+      const categoryObj = categoriesData?.find(
+        (c) => c.id === product.category_id
+      );
+      return {
+        ...product,
+        category: categoryObj?.name ?? product.category,
+      };
+    });
+  }, [productsData, categoriesData]);
 
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -38,7 +66,7 @@ export default function PosPage() {
         selectedCategory === "All" || product.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory]);
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -60,7 +88,7 @@ export default function PosPage() {
     });
   };
 
-  const updateQuantity = (id: string, delta: number) => {
+  const updateQuantity = (id: string | number, delta: number) => {
     setCart((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -72,7 +100,7 @@ export default function PosPage() {
     );
   };
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = (id: string | number) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -81,7 +109,7 @@ export default function PosPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handleSelectPaymentMethod = (method: "cash" | "transfer") => {
+  const handleSelectPaymentMethod = (method: "cash" | "transfer" | "pos") => {
     setPaymentMethod(method);
     setIsPaymentModalOpen(true);
   };
@@ -109,7 +137,7 @@ export default function PosPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-6">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] gap-6">
       <PosProductGrid
         products={filteredProducts}
         categories={categories}
@@ -118,6 +146,7 @@ export default function PosPage() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onAddToCart={addToCart}
+        brandsMap={brandsMap}
       />
 
       <PosCart

@@ -10,6 +10,7 @@ import {
   Menu,
   Store,
   CreditCard,
+  Archive,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -29,7 +30,7 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-card border-r border-border transition-all duration-300 flex flex-col z-20",
+          "hidden md:flex bg-card border-r border-border transition-all duration-300 flex-col z-20",
           isSidebarOpen ? "w-64" : "w-20"
         )}
       >
@@ -69,10 +70,18 @@ export default function DashboardLayout() {
 
           {["admin", "manager"].includes(user?.role || "") && (
             <>
+              {user?.role === "admin" && (
+                <NavItem
+                  to="/dashboard/products"
+                  icon={<Archive size={20} />}
+                  label="Product Catalog"
+                  isOpen={isSidebarOpen}
+                />
+              )}
               <NavItem
                 to="/dashboard/inventory"
                 icon={<Package size={20} />}
-                label="Inventory"
+                label="Unit Inventory"
                 isOpen={isSidebarOpen}
               />
               <NavItem
@@ -153,7 +162,7 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-secondary/20 p-6">
+        <main className="flex-1 overflow-auto bg-secondary/20 p-4 md:p-6">
           <Outlet />
         </main>
       </div>

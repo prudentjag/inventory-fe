@@ -36,7 +36,7 @@ export default function StaffPage() {
     setEditingUser(null);
   };
 
-  const getUnitName = (id?: string) => {
+  const getUnitName = (id?: number | null) => {
     if (!id) return "Unassigned";
     return units?.find((u) => u.id === id)?.name || "Unknown Unit";
   };
@@ -45,7 +45,9 @@ export default function StaffPage() {
   const filteredUsers = users.filter(
     (u) =>
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.role && u.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      String(u.id) === searchQuery
   );
 
   const roleOptions = [
@@ -55,7 +57,7 @@ export default function StaffPage() {
     { label: "Auditor", value: "auditor" },
   ];
 
-  const unitOptions = units?.map((u) => ({ label: u.name, value: u.id })) || [];
+  const unitOptions = units?.map((u) => ({ label: u.name, value: String(u.id) })) || [];
 
   const columns: Column<User>[] = [
     {

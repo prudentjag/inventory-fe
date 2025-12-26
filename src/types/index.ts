@@ -1,10 +1,29 @@
 export type Role = "admin" | "manager" | "unit_head" | "staff";
 
 export interface Unit {
-  id: string;
+  id: number;
   name: string;
-  type: "bar" | "supermarket" | "club" | "kitchen" | "football_pitch" | "other";
+  type?: string;
   address?: string;
+  users?: User[];
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  image?: string | null;
+  description?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Brand {
+  id: number;
+  name: string;
+  image?: string | null;
+  category_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateStaffPayload {
@@ -16,26 +35,34 @@ export interface CreateStaffPayload {
 }
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   role: Role;
-  assigned_unit_id?: string; // If null, maybe super admin or unassigned
+  assigned_unit_id?: number | null;
   avatar_url?: string;
+  pivot?: {
+    unit_id: number;
+    user_id: number;
+  };
 }
 
 export interface Product {
-  id: string;
+  id: string | number;
   name: string;
   sku: string;
   barcode?: string;
-  brand: string;
-  category: string;
-  price: number;
+  brand?: string; // Derived or optional if using ID
+  brand_id?: number;
+  category?: string; // Derived or optional if using ID
+  category_id?: number;
+  price: number; // selling_price
+  selling_price?: number; // alias if needed, but usually we stick to one
   cost_price: number;
-  stock_quantity: number; // In real app, this might be fetched via a separate relation per unit
+  stock_quantity: number;
   unit_of_measurement: string;
   image_url?: string;
+  trackable?: boolean;
 }
 
 export interface CartItem extends Product {

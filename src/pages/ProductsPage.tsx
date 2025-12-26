@@ -1,37 +1,33 @@
 import { useState } from "react";
-import {
-  Plus,
-  Filter,
-  Package,
-  AlertTriangle,
-} from "lucide-react";
+import { Plus, Filter, Pencil, Trash, Package } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
-import { useInventory } from "../data/inventory";
-import { AddStockModal } from "../components/modals/AddStockModal";
+import { useProducts } from "../data/products";
+import { ProductModal } from "../components/modals/ProductModal";
 import type { Product } from "../types";
-import { cn } from "../lib/utils";
-
 import { useAuth } from "../context/AuthContext";
-
 import { DataTable, type Column } from "../components/ui/DataTable";
 
-export default function InventoryPage() {
+export default function ProductsPage() {
   const { user } = useAuth();
+  const { data: apiProductsData, isLoading } = useProducts();
+  const products = apiProductsData?.data || [];
 
-  // Fetch unit inventory
-  const { data: inventoryData, isLoading } = useInventory(
-    user?.assigned_unit_id || undefined
-  );
-  const products = inventoryData?.data || [];
-
-  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleCloseRestock = () => {
-    setIsRestockModalOpen(false);
+  const canEdit = user?.role === "admin"; // Only admin should edit global catalog
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsDialogOpen(true);
   };
 
-  // derived state
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingProduct(null);
+  };
+
   const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,23 +67,9 @@ export default function InventoryPage() {
       header: "Category",
       accessorKey: "category",
       cell: (product) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border">
           {product.category}
         </span>
-      ),
-    },
-    {
-      header: "Stock",
-      accessorKey: "stock_quantity",
-      cell: (product) => (
-        <div
-          className={cn(
-            "font-medium",
-            product.stock_quantity < 10 ? "text-red-500" : "text-foreground"
-          )}
-        >
-          {product.stock_quantity} {product.unit_of_measurement}s
-        </div>
       ),
     },
     {
@@ -96,35 +78,63 @@ export default function InventoryPage() {
       className: "font-mono",
       cell: (product) => <span>₦{product.price.toLocaleString()}</span>,
     },
+    {
+      header: "Actions",
+      className: "text-right",
+      headerClassName: "text-right",
+      cell: (product) => (
+        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canEdit && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(product);
+                }}
+                className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+                title="Edit"
+              >
+                <Pencil size={16} />
+              </button>
+            </>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header Info Cards */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Global Product Catalog
+          </h1>
+          <p className="text-muted-foreground">
+            Define the items available for sale across all units.
+          </p>
+        </div>
+        {canEdit && (
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* ... existing info cards ... */}
         <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-4 shadow-sm">
           <div className="p-3 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/20 dark:text-blue-400">
             <Package size={24} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium">
-              Items in Stock
+              Total Definitions
             </p>
             <h3 className="text-2xl font-bold">{products.length}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-red-100 text-red-600 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-            <AlertTriangle size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground font-medium">
-              Low Stock Items
-            </p>
-            <h3 className="text-2xl font-bold">
-              {products.filter((p) => p.stock_quantity < 10).length}
-            </h3>
           </div>
         </div>
         <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-4 shadow-sm">
@@ -151,21 +161,16 @@ export default function InventoryPage() {
         <DataTable
           data={filteredProducts}
           columns={columns}
-          searchPlaceholder="Search unit inventory..."
+          searchPlaceholder="Search global catalog..."
           searchQuery={searchQuery}
           onSearch={setSearchQuery}
-          actionButton={
-            <button
-              onClick={() => setIsRestockModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
-              <Plus size={18} />
-              Restock Item
-            </button>
-          }
         />
       )}
-      <AddStockModal isOpen={isRestockModalOpen} onClose={handleCloseRestock} />
+      <ProductModal
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        product={editingProduct}
+      />
     </div>
   );
 }

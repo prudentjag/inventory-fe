@@ -53,7 +53,7 @@ export function PaymentModal({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-2">
+          <div className="grid grid-cols-3 gap-3 mb-2">
             <button
               onClick={() => setPaymentMethod("cash")}
               className={cn(
@@ -64,7 +64,19 @@ export function PaymentModal({
               )}
             >
               <Banknote size={24} />
-              <span className="font-semibold text-sm">Cash</span>
+              <span className="font-semibold text-xs sm:text-sm">Cash</span>
+            </button>
+            <button
+              onClick={() => setPaymentMethod("pos")}
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                paymentMethod === "pos"
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border bg-background hover:bg-accent text-muted-foreground"
+              )}
+            >
+              <CreditCard size={24} />
+              <span className="font-semibold text-xs sm:text-sm">POS</span>
             </button>
             <button
               onClick={() => setPaymentMethod("transfer")}
@@ -76,7 +88,7 @@ export function PaymentModal({
               )}
             >
               <CreditCard size={24} />
-              <span className="font-semibold text-sm">Transfer</span>
+              <span className="font-semibold text-xs sm:text-sm">Transfer</span>
             </button>
           </div>
 
@@ -131,6 +143,18 @@ export function PaymentModal({
                 <div className="text-xs text-muted-foreground text-center">
                   Please ask the customer to verify the account name before
                   transferring.
+                </div>
+              </div>
+            ) : paymentMethod === "pos" ? (
+              <div className="text-center py-4 space-y-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 mb-2">
+                  <CreditCard size={32} />
+                </div>
+                <div>
+                  <h3 className="font-medium">Confirm POS Payment</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Process payment on the POS terminal and confirm success.
+                  </p>
                 </div>
               </div>
             ) : (
