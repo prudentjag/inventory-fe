@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Plus,
-  Filter,
-  Package,
-  AlertTriangle,
-} from "lucide-react";
+import { Plus, Filter, Package, AlertTriangle } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useInventory } from "../data/inventory";
 import { AddStockModal } from "../components/modals/AddStockModal";
@@ -32,12 +27,14 @@ export default function InventoryPage() {
   };
 
   // derived state
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const query = searchQuery.toLowerCase();
+    const nameMatch = p.name?.toLowerCase().includes(query) ?? false;
+    const skuMatch = p.sku?.toLowerCase().includes(query) ?? false;
+    const brandName = typeof p.brand === "object" ? p.brand?.name : p.brand;
+    const brandMatch = brandName?.toLowerCase().includes(query) ?? false;
+    return nameMatch || skuMatch || brandMatch;
+  });
 
   const columns: Column<Product>[] = [
     {
@@ -70,11 +67,17 @@ export default function InventoryPage() {
     {
       header: "Category",
       accessorKey: "category",
-      cell: (product) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-          {product.category}
-        </span>
-      ),
+      cell: (product) => {
+        const categoryName =
+          typeof product.category === "object"
+            ? product.category?.name
+            : product.category;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            {categoryName ?? "-"}
+          </span>
+        );
+      },
     },
     {
       header: "Stock",
@@ -83,10 +86,12 @@ export default function InventoryPage() {
         <div
           className={cn(
             "font-medium",
-            product.stock_quantity < 10 ? "text-red-500" : "text-foreground"
+            (product.stock_quantity ?? 0) < 10
+              ? "text-red-500"
+              : "text-foreground"
           )}
         >
-          {product.stock_quantity} {product.unit_of_measurement}s
+          {product.stock_quantity ?? 0} {product.unit_of_measurement ?? "unit"}s
         </div>
       ),
     },
@@ -94,7 +99,11 @@ export default function InventoryPage() {
       header: "Price",
       accessorKey: "price",
       className: "font-mono",
-      cell: (product) => <span>₦{product.price.toLocaleString()}</span>,
+      cell: (product) => (
+        <span>
+          ₦{(product.price ?? product.selling_price ?? 0).toLocaleString()}
+        </span>
+      ),
     },
   ];
 
@@ -123,7 +132,7 @@ export default function InventoryPage() {
               Low Stock Items
             </p>
             <h3 className="text-2xl font-bold">
-              {products.filter((p) => p.stock_quantity < 10).length}
+              {products.filter((p) => (p.stock_quantity ?? 0) < 10).length}
             </h3>
           </div>
         </div>

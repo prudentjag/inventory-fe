@@ -21,7 +21,10 @@ export interface Brand {
   id: number;
   name: string;
   image?: string | null;
+  image_path?: string | null;
+  image_url?: string | null;
   category_id?: number | null;
+  items_per_set?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -52,15 +55,16 @@ export interface Product {
   name: string;
   sku: string;
   barcode?: string;
-  brand?: string; // Derived or optional if using ID
+  size?: string;
+  brand?: string | Brand; // Can be string or nested Brand object from API
   brand_id?: number;
-  category?: string; // Derived or optional if using ID
+  category?: string | Category; // Can be string or nested Category object from API
   category_id?: number;
-  price: number; // selling_price
-  selling_price?: number; // alias if needed, but usually we stick to one
-  cost_price: number;
-  stock_quantity: number;
-  unit_of_measurement: string;
+  price?: number; // selling_price - made optional since API might use selling_price
+  selling_price?: number;
+  cost_price?: number;
+  stock_quantity?: number;
+  unit_of_measurement?: string;
   image_url?: string;
   trackable?: boolean;
 }

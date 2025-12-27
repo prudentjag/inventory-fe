@@ -110,10 +110,17 @@ export function InvoiceModal({
                       <td className="py-1">{item.name}</td>
                       <td className="py-1 text-right">{item.quantity}</td>
                       <td className="py-1 text-right">
-                        {item.price.toLocaleString()}
+                        {(
+                          item.price ??
+                          item.selling_price ??
+                          0
+                        ).toLocaleString()}
                       </td>
                       <td className="py-1 text-right">
-                        {(item.price * item.quantity).toLocaleString()}
+                        {(
+                          (item.price ?? item.selling_price ?? 0) *
+                          item.quantity
+                        ).toLocaleString()}
                       </td>
                     </tr>
                   ))}

@@ -45,7 +45,7 @@ export default function PosPage() {
 
   // Products from API, with mapped category names
   const products = useMemo(() => {
-    return (productsData?.data ?? []).map((product) => {
+    return (productsData ?? []).map((product) => {
       // Map category_id to category name
       const categoryObj = categoriesData?.find(
         (c) => c.id === product.category_id
@@ -69,7 +69,8 @@ export default function PosPage() {
   }, [products, searchQuery, selectedCategory]);
 
   const cartTotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum + (item.price ?? item.selling_price ?? 0) * item.quantity,
     0
   );
 

@@ -109,13 +109,29 @@ function BrandsManager() {
       cell: (brand) => <span className="font-mono text-xs">#{brand.id}</span>,
     },
     {
+      header: "Brand logo",
+      accessorKey: "image",
+      cell: (brand) => (
+        <img
+          src={brand.image_url ?? undefined}
+          alt={brand.name}
+          className="w-16 h-16 object-cover rounded-full"
+        />
+      ),
+    },
+    {
       header: "Brand Name",
       accessorKey: "name",
       cell: (brand) => <span className="font-medium">{brand.name}</span>,
     },
     {
+      header: "Item per set",
+      accessorKey: "items_per_set",
+      cell: (brand) => <span className="font-medium">{brand.items_per_set}</span>,
+    },
+    {
       header: "Actions",
-      className: "text-right",
+      className: "text-left",
       cell: (brand) => (
         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button

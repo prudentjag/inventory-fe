@@ -58,7 +58,7 @@ export function PosCart({
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-sm truncate">{item.name}</h4>
                 <p className="text-xs text-muted-foreground">
-                  @{item.price.toLocaleString()}
+                  @{(item.price ?? item.selling_price ?? 0).toLocaleString()}
                 </p>
               </div>
 
@@ -82,7 +82,10 @@ export function PosCart({
                 </div>
                 <div className="text-right min-w-[60px]">
                   <div className="font-bold text-sm">
-                    ₦{(item.price * item.quantity).toLocaleString()}
+                    ₦
+                    {(
+                      (item.price ?? item.selling_price ?? 0) * item.quantity
+                    ).toLocaleString()}
                   </div>
                 </div>
                 <button

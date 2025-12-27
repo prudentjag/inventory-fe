@@ -9,8 +9,8 @@ import { DataTable, type Column } from "../components/ui/DataTable";
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const { data: apiProductsData, isLoading } = useProducts();
-  const products = apiProductsData?.data || [];
+  const { data: products = [], isLoading } = useProducts();
+console.log(products);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -28,12 +28,15 @@ export default function ProductsPage() {
     setEditingProduct(null);
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const query = searchQuery.toLowerCase();
+    const nameMatch = p.name?.toLowerCase().includes(query) ?? false;
+    const skuMatch = p.sku?.toLowerCase().includes(query) ?? false;
+    // Handle brand as either string or object
+    const brandName = typeof p.brand === "object" ? p.brand?.name : p.brand;
+    const brandMatch = brandName?.toLowerCase().includes(query) ?? false;
+    return nameMatch || skuMatch || brandMatch;
+  });
 
   const columns: Column<Product>[] = [
     {
@@ -60,23 +63,34 @@ export default function ProductsPage() {
       header: "SKU",
       accessorKey: "sku",
       cell: (product) => (
-        <span className="text-muted-foreground">{product.sku}</span>
+        <span className="text-muted-foreground">{product.sku ?? "-"}</span>
       ),
     },
     {
       header: "Category",
       accessorKey: "category",
-      cell: (product) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border">
-          {product.category}
-        </span>
-      ),
+      cell: (product) => {
+        // Handle category as either string or object
+        const categoryName =
+          typeof product.category === "object"
+            ? product.category?.name
+            : product.category;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border">
+            {categoryName ?? "-"}
+          </span>
+        );
+      },
     },
     {
       header: "Price",
       accessorKey: "price",
       className: "font-mono",
-      cell: (product) => <span>₦{product.price.toLocaleString()}</span>,
+      cell: (product) => (
+        <span>
+          ₦{(product.price ?? product.selling_price ?? 0).toLocaleString()}
+        </span>
+      ),
     },
     {
       header: "Actions",
@@ -146,7 +160,7 @@ export default function ProductsPage() {
               Categories
             </p>
             <h3 className="text-2xl font-bold">
-              {new Set(products.map((p) => p.category)).size}
+              {new Set(products.map((p) => p.category).filter(Boolean)).size}
             </h3>
           </div>
         </div>

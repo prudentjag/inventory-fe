@@ -28,6 +28,9 @@ export function PosProductGrid({
     if (!brandsMap || !product.brand_id) return null;
     return brandsMap.get(product.brand_id)?.image;
   };
+
+  console.log(products);
+
   return (
     <div className="flex-1 flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Search & Filter Header */}
@@ -75,19 +78,27 @@ export function PosProductGrid({
             <div className="aspect-square bg-secondary/50 rounded-md mb-3 flex items-center justify-center text-muted-foreground overflow-hidden relative">
               {(() => {
                 const brandImage = getBrandImage(product);
+                const brandName =
+                  typeof product.brand === "object"
+                    ? product.brand?.name
+                    : product.brand;
+                const brandImageUrl =
+                  typeof product.brand === "object"
+                    ? product.brand?.image_url
+                    : null;
                 if (brandImage) {
                   return (
                     <img
                       src={brandImage}
-                      alt={product.brand || product.name}
+                      alt={brandName || product.name}
                       className="w-full h-full object-contain p-2"
                     />
                   );
                 }
-                if (product.image_url) {
+                if (brandImageUrl) {
                   return (
                     <img
-                      src={product.image_url}
+                      src={brandImageUrl}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -112,10 +123,17 @@ export function PosProductGrid({
             </h3>
             <div className="flex items-center justify-between mt-1">
               <span className="text-muted-foreground text-xs">
-                {product.brand}
+                {typeof product.brand === "object"
+                  ? product.brand?.name
+                  : product.brand}
               </span>
               <span className="font-bold text-primary text-sm">
-                ₦{product.price.toLocaleString()}
+                ₦
+                {(
+                  product?.price ??
+                  product?.selling_price ??
+                  0
+                ).toLocaleString()}
               </span>
             </div>
           </button>

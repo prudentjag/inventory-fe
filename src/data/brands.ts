@@ -7,6 +7,7 @@ export interface CreateBrandPayload {
   name: string;
   category_id?: number;
   image?: File | null;
+  items_per_set?: number;
 }
 
 export interface UpdateBrandPayload {
@@ -28,6 +29,9 @@ export const createBrand = async (data: CreateBrandPayload) => {
   }
   if (data.image) {
     formData.append("image", data.image);
+  }
+  if (data.items_per_set) {
+    formData.append("items_per_set", String(data.items_per_set));
   }
 
   const response = await api.post<ApiResponse<Brand>>(
@@ -53,6 +57,9 @@ export const updateBrand = async ({ id, data }: UpdateBrandPayload) => {
   if (data.image) {
     formData.append("image", data.image);
   }
+  if (data.items_per_set) {
+    formData.append("items_per_set", String(data.items_per_set));
+  } 
   // Laravel requires _method for PUT with FormData
   formData.append("_method", "PUT");
 
