@@ -11,6 +11,9 @@ import {
   Store,
   CreditCard,
   Archive,
+  Warehouse,
+  ClipboardList,
+  History as HistoryIcon,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -68,7 +71,32 @@ export default function DashboardLayout() {
             isOpen={isSidebarOpen}
           />
 
-          {["admin", "manager"].includes(user?.role || "") && (
+          {/* Stockist & Admin: Central Stock */}
+          {["admin", "stockist"].includes(user?.role || "") && (
+            <>
+              <NavItem
+                to="/dashboard/central-stock"
+                icon={<Warehouse size={20} />}
+                label="Central Stock"
+                isOpen={isSidebarOpen}
+              />
+              <NavItem
+                to="/dashboard/audit-logs"
+                icon={<HistoryIcon size={20} />}
+                label="Central Audit"
+                isOpen={isSidebarOpen}
+              />
+            </>
+          )}
+          <NavItem
+            to="/dashboard/stock-requests"
+            icon={<ClipboardList size={20} />}
+            label="Stock Requests"
+            isOpen={isSidebarOpen}
+          />
+
+          {/* Admin & Manager sections */}
+          {["admin", "manager", "stockist"].includes(user?.role || "") && (
             <>
               {user?.role === "admin" && (
                 <NavItem

@@ -13,4 +13,7 @@ export const API_ENDPOINTS = {
   DASHBOARD_STATS: "/dashboard/stats",
   BRANDS: "/brands",
   CATEGORIES: "/categories",
+  STOCK: "/stock",
+  STOCK_REQUESTS: "/stock-requests",
+  AUDIT_LOGS: "/audit-logs",
 } as const;

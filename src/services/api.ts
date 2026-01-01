@@ -1,6 +1,7 @@
 import axios from "axios";
 
-export const BASE_URL = "https://booth-step-version-gmt.trycloudflare.com";
+export const BASE_URL =
+  "https://baskets-chambers-related-translations.trycloudflare.com";
 
 const api = axios.create({
   baseURL: `${BASE_URL}/api`,

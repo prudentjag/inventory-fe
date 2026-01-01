@@ -57,7 +57,8 @@ export default function StaffPage() {
     { label: "Auditor", value: "auditor" },
   ];
 
-  const unitOptions = units?.map((u) => ({ label: u.name, value: String(u.id) })) || [];
+  const unitOptions =
+    units?.map((u) => ({ label: u.name, value: String(u.id) })) || [];
 
   const columns: Column<User>[] = [
     {
@@ -196,7 +197,6 @@ export default function StaffPage() {
             </button>
           }
         />
-
       )}
 
       {/* Add/Edit Modal */}

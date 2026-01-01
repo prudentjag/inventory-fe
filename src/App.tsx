@@ -12,6 +12,9 @@ import TransactionsPage from "./pages/TransactionsPage";
 import ProductsPage from "./pages/ProductsPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import SettingsPage from "./pages/SettingsPage";
+import { CentralStockPage } from "./pages/CentralStockPage";
+import { StockRequestsPage } from "./pages/StockRequestsPage";
+import { AuditLogsPage } from "./pages/AuditLogsPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +60,9 @@ export default function App() {
               <Route path="units" element={<UnitsPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="central-stock" element={<CentralStockPage />} />
+              <Route path="stock-requests" element={<StockRequestsPage />} />
+              <Route path="audit-logs" element={<AuditLogsPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,13 @@
-export type Role = "admin" | "manager" | "unit_head" | "staff";
+export type Role = "admin" | "stockist" | "manager" | "unit_head" | "staff";
+
+export type AuditLogAction =
+  | "stock_added"
+  | "stock_updated"
+  | "product_created"
+  | "product_updated"
+  | "stock_request_approved"
+  | "inventory_updated"
+  | "inventory_transfer";
 
 export interface Unit {
   id: number;
@@ -43,6 +52,7 @@ export interface User {
   email: string;
   role: Role;
   assigned_unit_id?: number | null;
+  units?: Unit[];
   avatar_url?: string;
   pivot?: {
     unit_id: number;
@@ -106,8 +116,16 @@ export interface AdminStats {
   low_stock_alerts: number;
 }
 
+export interface StockistStats {
+  role: "stockist";
+  total_central_stock: number;
+  total_products_in_stock: number;
+  low_stock_alerts: number;
+  pending_requests: number;
+}
+
 export interface ManagerStats {
-  role: "manager" | "unit_head"; // Assuming unit_head shares structure or is mapped to manager
+  role: "manager" | "unit_head";
   unit_sales_count: number;
   unit_revenue: number;
   low_stock_alerts: number;
@@ -121,4 +139,53 @@ export interface StaffStats {
   items_sold: number;
 }
 
-export type DashboardStats = AdminStats | ManagerStats | StaffStats;
+export type DashboardStats =
+  | AdminStats
+  | StockistStats
+  | ManagerStats
+  | StaffStats;
+
+// Central Stock types
+export interface Stock {
+  id: number;
+  product_id: number;
+  product?: Product;
+  quantity: number;
+  low_stock_threshold: number;
+  batch_number?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type StockRequestStatus = "pending" | "approved" | "rejected";
+
+export interface StockRequest {
+  id: number;
+  unit_id: number;
+  unit?: Unit;
+  product_id: number;
+  product?: Product;
+  quantity: number;
+  status: StockRequestStatus;
+  notes?: string;
+  requested_by?: User;
+  approved_by?: User;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface AuditLog {
+  id: number;
+  user_id: number;
+  user?: User;
+  action: AuditLogAction;
+  resource_type: "stock" | "product" | "stockRequest" | "inventory";
+  resource_id: number;
+  old_values?: any;
+  new_values?: any;
+  description?: string;
+  info?: string; // Adding this since user is using it in UI
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}

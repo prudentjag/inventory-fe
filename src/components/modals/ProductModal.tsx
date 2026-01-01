@@ -8,7 +8,6 @@ import { CustomFormInput } from "../form/CustomFormInput";
 import { BarcodeScanner } from "../form/BarcodeScanner";
 import { useCreateProduct } from "../../data/products";
 import { useBrands } from "../../data/brands";
-import { useCategories } from "../../data/categories";
 import type { Product } from "../../types";
 
 interface ProductModalProps {
@@ -21,13 +20,11 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   const [showScanner, setShowScanner] = useState(false);
   const createProductMutation = useCreateProduct();
   const { data: brands = [] } = useBrands();
-  const { data: categories = [] } = useCategories();
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Required"),
     sku: Yup.string().required("Required"),
     brand_id: Yup.number().required("Required"),
-    category_id: Yup.number().required("Required"),
     size: Yup.string()
       .oneOf(
         ["small", "medium", "large", "extra large"],
@@ -37,6 +34,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     price: Yup.number().positive("Must be positive").required("Required"),
     cost_price: Yup.number().positive("Must be positive").required("Required"),
     unit_of_measurement: Yup.string().required("Required"),
+    quantity: Yup.number().min(1, "Must be at least 1").required("Required"),
   });
 
   const formik = useFormik({
@@ -45,7 +43,6 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       name: "",
       sku: "",
       brand_id: "",
-      category_id: "",
       price: 0,
       size: "",
       cost_price: 0,
@@ -53,6 +50,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       unit_of_measurement: "bottle",
       image_url: "",
       trackable: true,
+      quantity: 1,
     },
     enableReinitialize: true,
     validationSchema,
@@ -61,12 +59,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         name: values.name,
         sku: values.sku,
         brand_id: Number(values.brand_id),
-        category_id: Number(values.category_id),
         size: values.size,
         selling_price: Number(values.price),
         cost_price: Number(values.cost_price),
         unit_of_measurement: values.unit_of_measurement,
-        trackable: true, // Hardcoded as per request or UI toggle? Request implies true.
+        trackable: true,
+        quantity: Number(values.quantity),
       };
 
       if (product) {
@@ -185,32 +183,13 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   </p>
                 )}
               </div>
-
-              <div className="space-y-2">
-                <label htmlFor="category_id" className="text-sm font-medium">
-                  Category
-                </label>
-                <select
-                  id="category_id"
-                  name="category_id"
-                  className="w-full h-12 px-3 rounded-md border border-input bg-background"
-                  value={formik.values.category_id}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {formik.touched.category_id && formik.errors.category_id && (
-                  <p className="text-sm text-destructive">
-                    {formik.errors.category_id}
-                  </p>
-                )}
-              </div>
+              <CustomFormInput
+                name="quantity"
+                label="Stock Quantity"
+                type="number"
+                formik={formik}
+                placeholder="e.g. 100"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -242,7 +221,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   onBlur={formik.handleBlur}
                 >
                   <option value="">Select Size</option>
-                  {["Small", "Medium", "Large", "Extra Large"].map((size) => (
+                  {["small", "medium", "large", "extra large"].map((size) => (
                     <option key={size} value={size}>
                       {size}
                     </option>

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Plus, Filter, Package, AlertTriangle } from "lucide-react";
+import { Plus, Filter, Package, AlertTriangle, Send } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useInventory } from "../data/inventory";
+import { useUnits } from "../data/units";
 import { AddStockModal } from "../components/modals/AddStockModal";
-import type { Product } from "../types";
+import { RequestStockModal } from "../components/modals/RequestStockModal";
+import type { Product, Unit } from "../types";
 import { cn } from "../lib/utils";
 
 import { useAuth } from "../context/AuthContext";
@@ -12,14 +14,19 @@ import { DataTable, type Column } from "../components/ui/DataTable";
 
 export default function InventoryPage() {
   const { user } = useAuth();
+  const [selectedUnitId, setSelectedUnitId] = useState<
+    number | string | undefined
+  >(user?.assigned_unit_id || undefined);
+
+  // Fetch all units for filtering (if admin/stockist)
+  const { data: units } = useUnits();
 
   // Fetch unit inventory
-  const { data: inventoryData, isLoading } = useInventory(
-    user?.assigned_unit_id || undefined
-  );
+  const { data: inventoryData, isLoading } = useInventory(selectedUnitId);
   const products = inventoryData?.data || [];
 
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleCloseRestock = () => {
@@ -109,6 +116,35 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
+      {/* Unit Filter - Only for Admins and Stockists */}
+      {["admin", "stockist"].includes(user?.role || "") && (
+        <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
+            <Filter size={18} />
+            <span className="text-sm font-medium">Filter by Unit:</span>
+          </div>
+          <div className="w-full max-w-sm">
+            <select
+              value={selectedUnitId || ""}
+              onChange={(e) => setSelectedUnitId(e.target.value)}
+              className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer hover:border-primary/50"
+            >
+              <option value="">Choose a unit...</option>
+              {units?.map((unit: Unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name} ({unit.type})
+                </option>
+              ))}
+            </select>
+          </div>
+          {!selectedUnitId && (
+            <p className="text-xs text-amber-600 font-medium">
+              Please select a unit to view its current inventory status.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Header Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* ... existing info cards ... */}
@@ -164,17 +200,32 @@ export default function InventoryPage() {
           searchQuery={searchQuery}
           onSearch={setSearchQuery}
           actionButton={
-            <button
-              onClick={() => setIsRestockModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
-              <Plus size={18} />
-              Restock Item
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              {["manager", "unit_head"].includes(user?.role || "") && (
+                <button
+                  onClick={() => setIsRequestModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium shadow-sm flex-1 sm:flex-initial justify-center"
+                >
+                  <Send size={18} />
+                  Request Stock
+                </button>
+              )}
+              <button
+                onClick={() => setIsRestockModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm flex-1 sm:flex-initial justify-center"
+              >
+                <Plus size={18} />
+                Restock Item
+              </button>
+            </div>
           }
         />
       )}
       <AddStockModal isOpen={isRestockModalOpen} onClose={handleCloseRestock} />
+      <RequestStockModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+      />
     </div>
   );
 }
