@@ -5,7 +5,7 @@ import { useInventory } from "../data/inventory";
 import { useUnits } from "../data/units";
 import { AddStockModal } from "../components/modals/AddStockModal";
 import { RequestStockModal } from "../components/modals/RequestStockModal";
-import type { Product, Unit } from "../types";
+import type { InventoryItem, Unit } from "../types";
 import { cn } from "../lib/utils";
 
 import { useAuth } from "../context/AuthContext";
@@ -16,14 +16,14 @@ export default function InventoryPage() {
   const { user } = useAuth();
   const [selectedUnitId, setSelectedUnitId] = useState<
     number | string | undefined
-  >(user?.assigned_unit_id || undefined);
+  >(user?.assigned_unit_id || user?.units?.[0]?.id || undefined);
 
   // Fetch all units for filtering (if admin/stockist)
   const { data: units } = useUnits();
 
   // Fetch unit inventory
   const { data: inventoryData, isLoading } = useInventory(selectedUnitId);
-  const products = inventoryData?.data || [];
+  const items = inventoryData?.data || [];
 
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -34,25 +34,26 @@ export default function InventoryPage() {
   };
 
   // derived state
-  const filteredProducts = products.filter((p) => {
+  const filteredItems = items.filter((item) => {
+    const product = item.product;
     const query = searchQuery.toLowerCase();
-    const nameMatch = p.name?.toLowerCase().includes(query) ?? false;
-    const skuMatch = p.sku?.toLowerCase().includes(query) ?? false;
-    const brandName = typeof p.brand === "object" ? p.brand?.name : p.brand;
+    const nameMatch = product?.name?.toLowerCase().includes(query) ?? false;
+    const skuMatch = product?.sku?.toLowerCase().includes(query) ?? false;
+    const brandName =
+      typeof product?.brand === "object" ? product.brand?.name : product?.brand;
     const brandMatch = brandName?.toLowerCase().includes(query) ?? false;
     return nameMatch || skuMatch || brandMatch;
   });
 
-  const columns: Column<Product>[] = [
+  const columns: Column<InventoryItem>[] = [
     {
       header: "Product Name",
-      accessorKey: "name",
-      cell: (product) => (
+      cell: (item) => (
         <div className="flex items-center gap-3 font-medium text-foreground">
           <div className="w-8 h-8 rounded bg-secondary/80 flex items-center justify-center overflow-hidden border border-border">
-            {product.image_url ? (
+            {item.product?.brand?.image_url ? (
               <img
-                src={product.image_url}
+                src={item.product.brand.image_url}
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -60,25 +61,23 @@ export default function InventoryPage() {
               <Package size={14} className="text-muted-foreground" />
             )}
           </div>
-          {product.name}
+          {item.product?.name}
         </div>
       ),
     },
     {
       header: "SKU",
-      accessorKey: "sku",
-      cell: (product) => (
-        <span className="text-muted-foreground">{product.sku}</span>
+      cell: (item) => (
+        <span className="text-muted-foreground">{item.product?.sku}</span>
       ),
     },
     {
       header: "Category",
-      accessorKey: "category",
-      cell: (product) => {
+      cell: (item) => {
         const categoryName =
-          typeof product.category === "object"
-            ? product.category?.name
-            : product.category;
+          typeof item.product?.category === "object"
+            ? item.product.category?.name
+            : item.product?.category;
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
             {categoryName ?? "-"}
@@ -88,31 +87,49 @@ export default function InventoryPage() {
     },
     {
       header: "Stock",
-      accessorKey: "stock_quantity",
-      cell: (product) => (
+      cell: (item) => (
         <div
           className={cn(
             "font-medium",
-            (product.stock_quantity ?? 0) < 10
-              ? "text-red-500"
-              : "text-foreground"
+            (item.quantity ?? 0) < 10 ? "text-red-500" : "text-foreground"
           )}
         >
-          {product.stock_quantity ?? 0} {product.unit_of_measurement ?? "unit"}s
+          {item.quantity ?? 0} {item.product?.unit_of_measurement ?? "unit"}s
         </div>
       ),
     },
     {
       header: "Price",
-      accessorKey: "price",
       className: "font-mono",
-      cell: (product) => (
+      cell: (item) => (
         <span>
-          ₦{(product.price ?? product.selling_price ?? 0).toLocaleString()}
+          ₦
+          {(
+            item.product?.price ??
+            item.product?.selling_price ??
+            0
+          ).toLocaleString()}
         </span>
       ),
     },
   ];
+  if (!selectedUnitId && !["admin", "stockist"].includes(user?.role || "")) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center p-6">
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-8 max-w-md text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto dark:bg-amber-900/20 dark:text-amber-400">
+            <Package size={32} />
+          </div>
+          <h2 className="text-2xl font-bold">No Unit Assigned</h2>
+          <p className="text-muted-foreground">
+            Your account is not currently assigned to any unit or location.
+            Please contact your administrator to assign you to a unit to view
+            inventory.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -156,7 +173,7 @@ export default function InventoryPage() {
             <p className="text-sm text-muted-foreground font-medium">
               Items in Stock
             </p>
-            <h3 className="text-2xl font-bold">{products.length}</h3>
+            <h3 className="text-2xl font-bold">{items.length}</h3>
           </div>
         </div>
         <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-4 shadow-sm">
@@ -168,7 +185,7 @@ export default function InventoryPage() {
               Low Stock Items
             </p>
             <h3 className="text-2xl font-bold">
-              {products.filter((p) => (p.stock_quantity ?? 0) < 10).length}
+              {items.filter((item) => (item.quantity ?? 0) < 10).length}
             </h3>
           </div>
         </div>
@@ -181,7 +198,14 @@ export default function InventoryPage() {
               Categories
             </p>
             <h3 className="text-2xl font-bold">
-              {new Set(products.map((p) => p.category)).size}
+              {
+                new Set(
+                  items.map((item) => {
+                    const cat = item.product?.category;
+                    return typeof cat === "object" ? cat?.name : cat;
+                  })
+                ).size
+              }
             </h3>
           </div>
         </div>
@@ -194,7 +218,7 @@ export default function InventoryPage() {
         </div>
       ) : (
         <DataTable
-          data={filteredProducts}
+          data={filteredItems}
           columns={columns}
           searchPlaceholder="Search unit inventory..."
           searchQuery={searchQuery}

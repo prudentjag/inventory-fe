@@ -95,7 +95,7 @@ export default function StaffPage() {
       accessorKey: "assigned_unit_id",
       cell: (user) => (
         <span className="text-muted-foreground">
-          {getUnitName(user.assigned_unit_id)}
+          {user.units?.map((u) => u.name).join(", ") || "Unassigned"}
         </span>
       ),
     },

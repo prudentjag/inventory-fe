@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import type { Product, CartItem, Brand } from "../types";
+import { Loader2, Store } from "lucide-react";
+import type { Product, CartItem, Brand, InventoryItem } from "../types";
 import { useCategories } from "../data/categories";
-import { useProducts } from "../data/products";
+import { useInventory } from "../data/inventory";
 import { useBrands } from "../data/brands";
+import { useAuth } from "../context/AuthContext";
 import { PosProductGrid } from "../components/pos/PosProductGrid";
 import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
@@ -25,9 +27,14 @@ export default function PosPage() {
     orderId: string;
   } | null>(null);
 
+  const { user } = useAuth();
+  const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
+
   // API Data
   const { data: categoriesData } = useCategories();
-  const { data: productsData } = useProducts();
+  const { data: inventoryData, isLoading } = useInventory(
+    effectiveUnitId || undefined
+  );
   const { data: brandsData } = useBrands();
 
   // Build brand lookup map for efficient access
@@ -43,19 +50,25 @@ export default function PosPage() {
     return ["All", ...categoryNames];
   }, [categoriesData]);
 
-  // Products from API, with mapped category names
+  // Products from unit inventory, with mapped category names
   const products = useMemo(() => {
-    return (productsData ?? []).map((product) => {
+    return (inventoryData?.data ?? []).map((item: InventoryItem) => {
+      const product = item.product;
       // Map category_id to category name
       const categoryObj = categoriesData?.find(
         (c) => c.id === product.category_id
       );
       return {
         ...product,
-        category: categoryObj?.name ?? product.category,
+        category:
+          categoryObj?.name ??
+          (typeof product.category === "object"
+            ? product.category?.name
+            : product.category),
+        stock_quantity: item.quantity, // Use unit-specific stock
       };
     });
-  }, [productsData, categoriesData]);
+  }, [inventoryData, categoriesData]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -137,8 +150,37 @@ export default function PosPage() {
     setCart([]);
   };
 
+  if (!effectiveUnitId) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center p-6">
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-8 max-w-md text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto dark:bg-amber-900/20 dark:text-amber-400">
+            <Store size={32} />
+          </div>
+          <h2 className="text-2xl font-bold">No Unit Assigned</h2>
+          <p className="text-muted-foreground">
+            Your account is not currently assigned to any unit or location.
+            Please contact your administrator to assign you to a unit to start
+            using the POS system.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex flex-col items-center justify-center gap-4">
+        <Loader2 size={40} className="animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium animate-pulse">
+          Loading unit inventory...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] gap-6">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] gap-6 animate-in fade-in duration-500">
       <PosProductGrid
         products={filteredProducts}
         categories={categories}

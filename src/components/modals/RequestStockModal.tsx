@@ -33,20 +33,20 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
       value: String(u.id),
     })) || [];
 
-    const staffunitOptions =
-      user?.units?.map((u) => ({
-        label: u.name,
-        value: String(u.id),
-      })) || [];
+  const staffunitOptions =
+    user?.units?.map((u) => ({
+      label: u.name,
+      value: String(u.id),
+    })) || [];
+
+  // Derive effective unit ID from user data
+  const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
 
   // If user is assigned to a unit, default to that unit
-  const defaultUnitId = user?.assigned_unit_id
-    ? String(user.assigned_unit_id)
-    : "";
+  const defaultUnitId = effectiveUnitId ? String(effectiveUnitId) : "";
 
   // Staff with assigned unit don't need to select a unit
-  const isUnitSelectorHidden =
-    user?.role === "staff" || !!user?.assigned_unit_id;
+  const isUnitSelectorHidden = user?.role === "staff" || !!effectiveUnitId;
 
   const validationSchema = Yup.object({
     unit_id: isUnitSelectorHidden
@@ -69,8 +69,8 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
     onSubmit: (values) => {
       // Use assigned_unit_id for staff, otherwise use selected unit
       const unitId =
-        isUnitSelectorHidden && user?.assigned_unit_id
-          ? user.assigned_unit_id
+        isUnitSelectorHidden && effectiveUnitId
+          ? effectiveUnitId
           : Number(values.unit_id);
 
       createRequestMutation.mutate(

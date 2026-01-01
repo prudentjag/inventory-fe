@@ -15,6 +15,10 @@ export interface Unit {
   type?: string;
   address?: string;
   users?: User[];
+  pivot?: {
+    user_id: number;
+    unit_id: number;
+  };
 }
 
 export interface Category {
@@ -188,4 +192,17 @@ export interface AuditLog {
   ip_address?: string;
   user_agent?: string;
   created_at: string;
+}
+
+export interface InventoryItem {
+  id: number;
+  unit_id: number;
+  product_id: number;
+  quantity: number;
+  low_stock_threshold: number;
+  product: Product;
+  created_at: string;
+  updated_at: string;
+  brand?: Brand;
+  category?: Category;
 }

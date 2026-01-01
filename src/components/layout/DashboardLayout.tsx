@@ -167,9 +167,13 @@ export default function DashboardLayout() {
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-full border border-border text-sm">
               <Store size={14} className="text-muted-foreground" />
               <span className="font-medium text-foreground">
-                {user?.assigned_unit_id
-                  ? `Assigned Unit: ${user.assigned_unit_id}`
-                  : "All Units (Admin)"}
+                {user?.units?.[0]?.name
+                  ? user.units[0].name
+                  : user?.assigned_unit_id
+                  ? `Unit ID: ${user.assigned_unit_id}`
+                  : ["admin", "stockist"].includes(user?.role || "")
+                  ? "Central Warehouse"
+                  : "No Unit Assigned"}
               </span>
             </div>
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
 import { API_ENDPOINTS } from "./endpoints";
-import type { ApiResponse, Product } from "../types";
+import type { ApiResponse, InventoryItem } from "../types";
 
 export interface AddInventoryPayload {
   unit_id: string | number;
@@ -23,7 +23,7 @@ export const useInventory = (unitId?: string | number) => {
     queryKey: ["inventory", unitId],
     queryFn: async () => {
       if (!unitId) return null;
-      const response = await api.get<ApiResponse<Product[]>>(
+      const response = await api.get<ApiResponse<InventoryItem[]>>(
         `${API_ENDPOINTS.INVENTORY}?unit_id=${unitId}`
       );
       return response.data;
