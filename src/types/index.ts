@@ -87,16 +87,81 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-export interface Transaction {
-  id: string;
-  unit_id: string;
-  staff_id: string;
-  staff_name: string;
-  total_amount: number;
-  payment_method: "cash" | "transfer";
-  status: "completed" | "pending";
+export type PaymentMethod = "cash" | "pos" | "transfer" | "monnify";
+export type PaymentStatus = "paid" | "completed" | "pending";
+
+export interface VirtualAccountDetails {
+  accountNumber: string;
+  bankName: string;
+  bankCode?: string;
+  invoiceReference?: string;
+  amount: number;
+  expiresOn?: string;
+}
+
+export interface SaleItem {
+  id: number;
+  sale_id: number;
+  product_id: number;
+  quantity: number;
+  unit_price: string | number;
+  total_price: string | number;
+  product?: Product;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Sale {
+  id: string | number;
+  unit_id: string | number;
+  user_id?: string | number;
+  invoice_number?: string;
+  // Legacy fields for backward compatibility
+  staff_id?: string | number;
+  staff_name?: string;
+  user?: User;
+  unit?: Unit;
+  total_amount: number | string;
+  payment_method: PaymentMethod;
+  payment_status?: PaymentStatus;
+  status?: PaymentStatus; // Alias for payment_status
+  transaction_reference?: string | null;
+  payment_data?: {
+    checkoutUrl?: string;
+    [key: string]: any;
+  };
+  account_details?: VirtualAccountDetails;
   created_at: string;
-  items: CartItem[];
+  updated_at?: string;
+  // Support both item formats
+  items?: CartItem[];
+  sale_items?: SaleItem[];
+}
+
+export type Transaction = Sale;
+
+// Pagination types
+export interface PaginationLink {
+  url: string | null;
+  label: string;
+  page: number | null;
+  active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  current_page: number;
+  data: T[];
+  first_page_url: string;
+  from: number | null;
+  last_page: number;
+  last_page_url: string;
+  links: PaginationLink[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number | null;
+  total: number;
 }
 
 export interface LoginData {
@@ -205,4 +270,44 @@ export interface InventoryItem {
   updated_at: string;
   brand?: Brand;
   category?: Category;
+}
+
+// Facility types
+export type FacilityType = "pitch" | "event_hall" | "court" | "conference_room";
+export type BookingStatus = "pending" | "confirmed" | "cancelled";
+
+export interface Facility {
+  id: number;
+  name: string;
+  type: FacilityType;
+  description?: string;
+  hourly_rate: number;
+  capacity?: number;
+  unit_id: number;
+  unit?: Unit;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FacilityBooking {
+  id: number;
+  facility_id: number;
+  facility?: Facility;
+  booking_reference: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  total_amount: number | string;
+  status: BookingStatus;
+  payment_method: PaymentMethod;
+  notes?: string;
+  sale_id?: number;
+  sale?: Sale;
+  created_by?: User;
+  created_at?: string;
+  updated_at?: string;
 }

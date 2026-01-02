@@ -51,7 +51,8 @@ export default function InventoryPage() {
       cell: (item) => (
         <div className="flex items-center gap-3 font-medium text-foreground">
           <div className="w-8 h-8 rounded bg-secondary/80 flex items-center justify-center overflow-hidden border border-border">
-            {item.product?.brand?.image_url ? (
+            {typeof item.product?.brand === "object" &&
+            item.product.brand?.image_url ? (
               <img
                 src={item.product.brand.image_url}
                 alt=""

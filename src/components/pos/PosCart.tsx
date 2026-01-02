@@ -14,7 +14,9 @@ interface PosCartProps {
   onUpdateQuantity: (id: string | number, delta: number) => void;
   onRemoveFromCart: (id: string | number) => void;
   onCheckout: () => void;
-  onSelectPaymentMethod: (method: "cash" | "transfer" | "pos") => void;
+  onSelectPaymentMethod: (
+    method: "cash" | "transfer" | "pos" | "monnify"
+  ) => void;
 }
 
 export function PosCart({
@@ -119,7 +121,7 @@ export function PosCart({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => onSelectPaymentMethod("cash")}
             className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
@@ -128,18 +130,25 @@ export function PosCart({
             <span className="text-xs font-medium">Cash</span>
           </button>
           <button
-            onClick={() => onSelectPaymentMethod("transfer")}
+            onClick={() => onSelectPaymentMethod("pos")}
             className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
           >
-            <CreditCard size={20} className="text-red-600" />
-            <span className="text-xs font-medium">Pos</span>
+            <CreditCard size={20} className="text-orange-600" />
+            <span className="text-xs font-medium">POS Terminal</span>
+          </button>
+          <button
+            onClick={() => onSelectPaymentMethod("monnify")}
+            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
+          >
+            <Banknote size={20} className="text-blue-600" />
+            <span className="text-xs font-medium">Transfer (Monnify)</span>
           </button>
           <button
             onClick={() => onSelectPaymentMethod("transfer")}
             className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/50 transition-all"
           >
-            <CreditCard size={20} className="text-blue-600" />
-            <span className="text-xs font-medium">Transfer</span>
+            <CreditCard size={20} className="text-muted-foreground" />
+            <span className="text-xs font-medium">Manual Transfer</span>
           </button>
         </div>
 

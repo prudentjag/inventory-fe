@@ -14,6 +14,9 @@ import {
   Warehouse,
   ClipboardList,
   History as HistoryIcon,
+  FileText,
+  Building2,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -70,6 +73,12 @@ export default function DashboardLayout() {
             label="Transactions"
             isOpen={isSidebarOpen}
           />
+          <NavItem
+            to="/dashboard/invoices"
+            icon={<FileText size={20} />}
+            label="Invoices"
+            isOpen={isSidebarOpen}
+          />
 
           {/* Stockist & Admin: Central Stock */}
           {["admin", "stockist"].includes(user?.role || "") && (
@@ -80,12 +89,6 @@ export default function DashboardLayout() {
                 label="Central Stock"
                 isOpen={isSidebarOpen}
               />
-              <NavItem
-                to="/dashboard/audit-logs"
-                icon={<HistoryIcon size={20} />}
-                label="Central Audit"
-                isOpen={isSidebarOpen}
-              />
             </>
           )}
           <NavItem
@@ -94,18 +97,30 @@ export default function DashboardLayout() {
             label="Stock Requests"
             isOpen={isSidebarOpen}
           />
+          <NavItem
+            to="/dashboard/facilities"
+            icon={<Building2 size={20} />}
+            label="Facilities"
+            isOpen={isSidebarOpen}
+          />
+          <NavItem
+            to="/dashboard/bookings"
+            icon={<CalendarDays size={20} />}
+            label="Bookings"
+            isOpen={isSidebarOpen}
+          />
 
           {/* Admin & Manager sections */}
           {["admin", "manager", "stockist"].includes(user?.role || "") && (
             <>
-              {user?.role === "admin" && (
+              {/* {user?.role === "admin" && (
                 <NavItem
                   to="/dashboard/products"
                   icon={<Archive size={20} />}
                   label="Product Catalog"
                   isOpen={isSidebarOpen}
                 />
-              )}
+              )} */}
               <NavItem
                 to="/dashboard/inventory"
                 icon={<Package size={20} />}
@@ -122,6 +137,12 @@ export default function DashboardLayout() {
                 to="/dashboard/units"
                 icon={<Store size={20} />}
                 label="Units"
+                isOpen={isSidebarOpen}
+              />
+              <NavItem
+                to="/dashboard/audit-logs"
+                icon={<HistoryIcon size={20} />}
+                label="Central Audit"
                 isOpen={isSidebarOpen}
               />
             </>

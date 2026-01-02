@@ -10,6 +10,8 @@ import { PosProductGrid } from "../components/pos/PosProductGrid";
 import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
 import { InvoiceModal } from "../components/pos/InvoiceModal";
+import { useCreateSale } from "../data/sales";
+import type { ApiResponse, Sale, VirtualAccountDetails } from "../types";
 
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -17,7 +19,7 @@ export default function PosPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
-    "cash" | "transfer" | "pos"
+    "cash" | "transfer" | "pos" | "monnify"
   >("cash");
 
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -25,6 +27,10 @@ export default function PosPage() {
     items: CartItem[];
     total: number;
     orderId: string;
+    invoiceNumber?: string;
+    checkoutUrl?: string;
+    accountDetails?: VirtualAccountDetails;
+    isPending?: boolean;
   } | null>(null);
 
   const { user } = useAuth();
@@ -36,6 +42,7 @@ export default function PosPage() {
     effectiveUnitId || undefined
   );
   const { data: brandsData } = useBrands();
+  const { mutate: createSale, isPending: isCreatingSale } = useCreateSale();
 
   // Build brand lookup map for efficient access
   const brandsMap = useMemo(() => {
@@ -123,31 +130,74 @@ export default function PosPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handleSelectPaymentMethod = (method: "cash" | "transfer" | "pos") => {
+  const handleSelectPaymentMethod = (
+    method: "cash" | "transfer" | "pos" | "monnify"
+  ) => {
     setPaymentMethod(method);
     setIsPaymentModalOpen(true);
   };
 
   const processPayment = () => {
-    const orderId = `ORD-${Math.floor(Math.random() * 1000000)}`;
-    const orderData = {
-      items: [...cart],
-      total: cartTotal,
-      orderId,
-    };
+    if (!effectiveUnitId) return;
 
-    // Save order data for invoice
-    setCurrentOrder(orderData);
+    createSale(
+      {
+        unit_id: effectiveUnitId,
+        payment_method: paymentMethod as any,
+        items: cart.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.price ?? item.selling_price ?? 0,
+        })),
+      },
+      {
+        onSuccess: (response: ApiResponse<Sale> | any) => {
+          // Handle nested response structure from Monnify
+          const sale = response.data?.sale || response.data;
+          const accountDetails = response.data?.account_details;
 
-    // Show success
-    toast.success(`Payment of ₦${cartTotal.toLocaleString()} successful!`);
+          const isMonnifyPending =
+            paymentMethod === "monnify" && accountDetails;
 
-    // Close payment, Open Invoice
-    setIsPaymentModalOpen(false);
-    setIsInvoiceModalOpen(true);
+          const orderData = {
+            items: [...cart],
+            total: cartTotal,
+            orderId: (sale?.id || "N/A").toString(),
+            invoiceNumber: sale?.invoice_number,
+            checkoutUrl: sale?.payment_data?.checkoutUrl,
+            accountDetails: accountDetails,
+            isPending: isMonnifyPending,
+          };
 
-    // Clear cart
-    setCart([]);
+          // Save order data for invoice
+          setCurrentOrder(orderData);
+
+          // Show appropriate message
+          if (isMonnifyPending) {
+            toast.info(
+              `Virtual account generated. Please transfer ₦${cartTotal.toLocaleString()} to complete.`
+            );
+          } else {
+            toast.success(
+              `Payment of ₦${cartTotal.toLocaleString()} successful!`
+            );
+          }
+
+          // Close payment, Open Invoice
+          setIsPaymentModalOpen(false);
+          setIsInvoiceModalOpen(true);
+
+          // Clear cart
+          setCart([]);
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message ||
+              "Failed to process payment. Please try again."
+          );
+        },
+      }
+    );
   };
 
   if (!effectiveUnitId) {
@@ -207,6 +257,7 @@ export default function PosPage() {
         cartTotal={cartTotal}
         paymentMethod={paymentMethod}
         setPaymentMethod={setPaymentMethod}
+        isLoading={isCreatingSale}
         onProcessPayment={processPayment}
       />
 
@@ -218,6 +269,10 @@ export default function PosPage() {
           cartTotal={currentOrder.total}
           paymentMethod={paymentMethod}
           orderId={currentOrder.orderId}
+          invoiceNumber={currentOrder.invoiceNumber}
+          checkoutUrl={currentOrder.checkoutUrl}
+          accountDetails={currentOrder.accountDetails}
+          isPending={currentOrder.isPending}
           onClose={() => setIsInvoiceModalOpen(false)}
         />
       )}

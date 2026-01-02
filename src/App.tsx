@@ -9,12 +9,15 @@ import InventoryPage from "./pages/InventoryPage";
 import StaffPage from "./pages/StaffPage";
 import DashboardOverview from "./pages/DashboardOverview";
 import TransactionsPage from "./pages/TransactionsPage";
+import InvoicesPage from "./pages/InvoicesPage";
 import ProductsPage from "./pages/ProductsPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import SettingsPage from "./pages/SettingsPage";
 import { CentralStockPage } from "./pages/CentralStockPage";
 import { StockRequestsPage } from "./pages/StockRequestsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
+import FacilitiesPage from "./pages/FacilitiesPage";
+import BookingsPage from "./pages/BookingsPage";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +58,7 @@ export default function App() {
               <Route index element={<DashboardOverview />} />
               <Route path="pos" element={<PosPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
+              <Route path="invoices" element={<InvoicesPage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="products" element={<ProductsPage />} />
               <Route path="units" element={<UnitsPage />} />
@@ -63,6 +67,8 @@ export default function App() {
               <Route path="central-stock" element={<CentralStockPage />} />
               <Route path="stock-requests" element={<StockRequestsPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />
+              <Route path="facilities" element={<FacilitiesPage />} />
+              <Route path="bookings" element={<BookingsPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

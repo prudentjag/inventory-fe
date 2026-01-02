@@ -13,9 +13,10 @@ interface PaymentModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   cartTotal: number;
-  paymentMethod: "cash" | "transfer" | "pos";
-  setPaymentMethod: (method: "cash" | "transfer" | "pos") => void;
+  paymentMethod: "cash" | "transfer" | "pos" | "monnify";
+  setPaymentMethod: (method: "cash" | "transfer" | "pos" | "monnify") => void;
   onProcessPayment: () => void;
+  isLoading?: boolean;
 }
 
 export function PaymentModal({
@@ -25,6 +26,7 @@ export function PaymentModal({
   paymentMethod,
   setPaymentMethod,
   onProcessPayment,
+  isLoading,
 }: PaymentModalProps) {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -53,42 +55,56 @@ export function PaymentModal({
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-2">
+          <div className="grid grid-cols-2 gap-3 mb-2">
             <button
               onClick={() => setPaymentMethod("cash")}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
                 paymentMethod === "cash"
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-border bg-background hover:bg-accent text-muted-foreground"
               )}
             >
-              <Banknote size={24} />
-              <span className="font-semibold text-xs sm:text-sm">Cash</span>
+              <Banknote size={20} />
+              <span className="font-semibold text-xs">Cash</span>
             </button>
             <button
               onClick={() => setPaymentMethod("pos")}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
                 paymentMethod === "pos"
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-border bg-background hover:bg-accent text-muted-foreground"
               )}
             >
-              <CreditCard size={24} />
-              <span className="font-semibold text-xs sm:text-sm">POS</span>
+              <CreditCard size={20} />
+              <span className="font-semibold text-xs">POS Terminal</span>
+            </button>
+            <button
+              onClick={() => setPaymentMethod("monnify")}
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
+                paymentMethod === "monnify"
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border bg-background hover:bg-accent text-muted-foreground"
+              )}
+            >
+              <Banknote size={20} />
+              <span className="font-semibold text-xs text-center leading-tight">
+                Transfer (Monnify)
+              </span>
             </button>
             <button
               onClick={() => setPaymentMethod("transfer")}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
                 paymentMethod === "transfer"
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-border bg-background hover:bg-accent text-muted-foreground"
               )}
             >
-              <CreditCard size={24} />
-              <span className="font-semibold text-xs sm:text-sm">Transfer</span>
+              <CreditCard size={20} />
+              <span className="font-semibold text-xs">Manual Transfer</span>
             </button>
           </div>
 
@@ -145,6 +161,19 @@ export function PaymentModal({
                   transferring.
                 </div>
               </div>
+            ) : paymentMethod === "monnify" ? (
+              <div className="text-center py-4 space-y-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 mb-2">
+                  <Banknote size={32} />
+                </div>
+                <div>
+                  <h3 className="font-medium">Direct Bank Transfer</h3>
+                  <p className="text-sm text-muted-foreground mt-1 px-4">
+                    Generate a unique Virtual Account Number for this customer
+                    to pay via bank transfer.
+                  </p>
+                </div>
+              </div>
             ) : paymentMethod === "pos" ? (
               <div className="text-center py-4 space-y-3">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 mb-2">
@@ -182,9 +211,14 @@ export function PaymentModal({
             </button>
             <button
               onClick={onProcessPayment}
-              className="flex-1 py-2.5 text-sm rounded-lg bg-primary text-primary-foreground font-light hover:bg-primary/90 transition-colors shadow-sm"
+              disabled={isLoading}
+              className="flex-1 py-2.5 text-sm rounded-lg bg-primary text-primary-foreground font-light hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {paymentMethod === "cash"
+              {isLoading
+                ? "Processing..."
+                : paymentMethod === "monnify"
+                ? "Generate Account"
+                : paymentMethod === "cash"
                 ? "Confirm Payment"
                 : "I Have Sent The Money"}
             </button>

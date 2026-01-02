@@ -4,19 +4,14 @@ import {
   Eye,
   CreditCard,
   User,
-  CheckCircle,
   Clock,
   Filter,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import type {
-  Transaction,
-  PaymentMethod,
-  PaymentStatus,
-  PaginationLink,
-} from "../types";
+import type { Transaction, PaymentMethod, PaginationLink } from "../types";
 import { cn } from "../lib/utils";
 import { format } from "date-fns";
 import { DataTable, type Column } from "../components/ui/DataTable";
@@ -29,7 +24,7 @@ import {
 } from "../data/sales";
 import { useUnits } from "../data/units";
 
-export default function TransactionsPage() {
+export default function InvoicesPage() {
   const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,14 +35,14 @@ export default function TransactionsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "">("");
   const [selectedUnitId, setSelectedUnitId] = useState<string | number>("");
 
   const filters: SaleFilters = {
     start_date: startDate || undefined,
     end_date: endDate || undefined,
     payment_method: (paymentMethod as PaymentMethod) || undefined,
-    payment_status: (paymentStatus as PaymentStatus) || undefined,
+    // CRITICAL: Hardcode to pending for Invoices page
+    payment_status: "pending",
     unit_id: selectedUnitId || undefined,
     page: currentPage,
   };
@@ -116,19 +111,13 @@ export default function TransactionsPage() {
   // derived state
   const filteredTxns = transactions.filter(
     (t: Transaction) =>
-      (t.id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.invoice_number || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        t.staff_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      t.payment_status !== "pending" &&
-      t.status !== "pending"
+      t.id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.invoice_number || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      t.staff_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Helper to get status (backend uses payment_status, fallback to status)
-  const getStatus = (txn: Transaction) =>
-    txn.payment_status || txn.status || "completed";
 
   // Helper to get staff name
   const getStaffName = (txn: Transaction) =>
@@ -165,16 +154,16 @@ export default function TransactionsPage() {
 
   const columns: Column<Transaction>[] = [
     {
-      header: "Transaction ID",
-      accessorKey: "id",
+      header: "Invoice #",
+      accessorKey: "invoice_number",
       cell: (txn) => (
-        <span className="font-mono text-xs">
-          {(txn.invoice_number || txn.id).toString().toUpperCase()}
+        <span className="font-mono text-xs font-semibold">
+          {txn.invoice_number || txn.id.toString().toUpperCase()}
         </span>
       ),
     },
     {
-      header: "Date & Time",
+      header: "Issued Date",
       accessorKey: "created_at",
       cell: (txn) => (
         <span className="text-muted-foreground">
@@ -210,26 +199,12 @@ export default function TransactionsPage() {
     {
       header: "Status",
       accessorKey: "status",
-      cell: (txn) => {
-        const status = getStatus(txn);
-        return (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border",
-              status === "completed" || status === "paid"
-                ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-100 dark:text-green-600 dark:border-green-200"
-                : "bg-yellow-100 text-yellow-700 border-yellow-200"
-            )}
-          >
-            {status === "completed" || status === "paid" ? (
-              <CheckCircle size={10} />
-            ) : (
-              <Clock size={10} />
-            )}
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-        );
-      },
+      cell: () => (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-yellow-100 text-yellow-700 border-yellow-200">
+          <Clock size={10} />
+          Pending
+        </span>
+      ),
     },
     {
       header: "Actions",
@@ -243,7 +218,7 @@ export default function TransactionsPage() {
               setSelectedTxn(txn);
             }}
             className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-            title="View Details"
+            title="View Invoice"
           >
             <Eye size={16} />
           </button>
@@ -256,9 +231,9 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
           <p className="text-muted-foreground">
-            View and manage sales history across all units.
+            Manage pending payments and outstanding invoices.
           </p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors font-medium border border-border">
@@ -272,7 +247,7 @@ export default function TransactionsPage() {
           <Filter size={18} />
           <span className="text-sm font-medium">Filters</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Start Date
@@ -310,20 +285,7 @@ export default function TransactionsPage() {
               <option value="transfer">Transfer</option>
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Status
-            </label>
-            <select
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value as any)}
-              className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">All Statuses</option>
-              <option value="paid">Paid</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
+
           {isAdminOrStockist && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -344,18 +306,13 @@ export default function TransactionsPage() {
             </div>
           )}
         </div>
-        {(startDate ||
-          endDate ||
-          paymentMethod ||
-          paymentStatus ||
-          selectedUnitId) && (
+        {(startDate || endDate || paymentMethod || selectedUnitId) && (
           <div className="flex justify-end pt-2">
             <button
               onClick={() => {
                 setStartDate("");
                 setEndDate("");
                 setPaymentMethod("");
-                setPaymentStatus("");
                 setSelectedUnitId("");
               }}
               className="text-xs text-primary hover:underline font-medium"
@@ -370,7 +327,7 @@ export default function TransactionsPage() {
         data={filteredTxns}
         columns={columns}
         isLoading={isLoading}
-        searchPlaceholder="Search by ID or Staff Name..."
+        searchPlaceholder="Search by Invoice # or Staff Name..."
         searchQuery={searchQuery}
         onSearch={setSearchQuery}
         onRowClick={(item) => setSelectedTxn(item)}
@@ -381,7 +338,7 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl">
           <div className="text-sm text-muted-foreground">
             Showing {paginationInfo.from} to {paginationInfo.to} of{" "}
-            {paginationInfo.total} transactions
+            {paginationInfo.total} invoices
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -434,13 +391,14 @@ export default function TransactionsPage() {
               <>
                 <div className="flex flex-col space-y-1.5">
                   <Dialog.Title className="text-lg font-semibold leading-none tracking-tight flex justify-between items-center">
-                    <span>Transaction Details</span>
+                    <span>Invoice Details</span>
                     <span className="text-sm font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
-                      {selectedTxn.id.toString().toUpperCase()}
+                      {selectedTxn.invoice_number ||
+                        selectedTxn.id.toString().toUpperCase()}
                     </span>
                   </Dialog.Title>
                   <p className="text-sm text-muted-foreground">
-                    Processed on{" "}
+                    Issued on{" "}
                     {format(new Date(selectedTxn.created_at), "PPP at pp")}
                   </p>
                 </div>
@@ -462,7 +420,7 @@ export default function TransactionsPage() {
                     </div>
                     <div>
                       <span className="text-muted-foreground block mb-1">
-                        Processed By
+                        Issued By
                       </span>
                       <div className="font-medium">
                         {getStaffName(selectedTxn)}
@@ -513,7 +471,10 @@ export default function TransactionsPage() {
 
                 <div className="flex justify-end gap-3 mt-2">
                   <button className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm font-medium">
-                    Print Receipt
+                    <div className="flex items-center gap-2">
+                      <FileText size={16} />
+                      Print Invoice
+                    </div>
                   </button>
                   <button
                     onClick={() => setSelectedTxn(null)}
