@@ -275,6 +275,7 @@ export interface InventoryItem {
 // Facility types
 export type FacilityType = "pitch" | "event_hall" | "court" | "conference_room";
 export type BookingStatus = "pending" | "confirmed" | "cancelled";
+export type TicketStatus = "paid" | "refunded";
 
 export interface Facility {
   id: number;
@@ -282,10 +283,31 @@ export interface Facility {
   type: FacilityType;
   description?: string;
   hourly_rate: number;
+  ticket_price?: number;
   capacity?: number;
   unit_id: number;
   unit?: Unit;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FacilityTicket {
+  id: number;
+  facility_id: number;
+  facility?: Facility;
+  ticket_reference: string;
+  customer_name: string;
+  customer_phone: string;
+  ticket_date: string;
+  check_in_time: string;
+  amount: number | string;
+  status: TicketStatus;
+  payment_method: PaymentMethod;
+  notes?: string;
+  sale_id?: number;
+  sale?: Sale;
+  created_by?: User;
   created_at?: string;
   updated_at?: string;
 }

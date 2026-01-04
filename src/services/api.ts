@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const BASE_URL = "https://mission-alumni-unlikely-organized.trycloudflare.com";
+export const BASE_URL = "https://potatoes-falling-upcoming-builds.trycloudflare.com";
 const api = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {

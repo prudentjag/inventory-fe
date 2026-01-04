@@ -20,4 +20,6 @@ export const API_ENDPOINTS = {
   FACILITIES: "/facilities",
   FACILITY_TYPES: "/facilities/types",
   FACILITY_BOOKINGS: "/facility-bookings",
+  FACILITY_TICKETS: "/facility-tickets",
+  FACILITY_TICKETS_STATS: "/facility-tickets-stats",
 } as const;

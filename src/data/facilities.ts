@@ -84,6 +84,7 @@ export interface CreateFacilityPayload {
   type: FacilityType;
   description?: string;
   hourly_rate: number;
+  ticket_price?: number;
   capacity?: number;
   unit_id: number;
   is_active?: boolean;
