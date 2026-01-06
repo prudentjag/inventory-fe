@@ -26,7 +26,7 @@ export const assignStaffToUnit = async ({
   unitId: number | string;
   userId: number | string;
 }) => {
-  const response = await api.post<ApiResponse<any>>(
+  const response = await api.post<ApiResponse<Unit>>(
     `${API_ENDPOINTS.UNITS}/${unitId}/users`,
     { user_id: userId }
   );

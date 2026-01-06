@@ -250,8 +250,8 @@ export interface AuditLog {
   action: AuditLogAction;
   resource_type: "stock" | "product" | "stockRequest" | "inventory";
   resource_id: number;
-  old_values?: any;
-  new_values?: any;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   description?: string;
   info?: string; // Adding this since user is using it in UI
   ip_address?: string;

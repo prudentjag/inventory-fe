@@ -31,7 +31,10 @@ const buildQueryString = (filters?: SaleFilters) => {
   return qs ? `?${qs}` : "";
 };
 
-export const useSales = (filters?: SaleFilters) => {
+export const useSales = (
+  filters?: SaleFilters,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ["sales", filters],
     queryFn: async () => {
@@ -40,12 +43,14 @@ export const useSales = (filters?: SaleFilters) => {
       );
       return response.data;
     },
+    enabled: options?.enabled ?? true,
   });
 };
 
 export const useUnitSales = (
   unitId: string | number,
-  filters?: SaleFilters
+  filters?: SaleFilters,
+  options?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: ["sales", "unit", unitId, filters],
@@ -56,11 +61,14 @@ export const useUnitSales = (
       );
       return response.data;
     },
-    enabled: !!unitId,
+    enabled: !!unitId && (options?.enabled ?? true),
   });
 };
 
-export const useMySales = (filters?: SaleFilters) => {
+export const useMySales = (
+  filters?: SaleFilters,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ["sales", "personal", filters],
     queryFn: async () => {
@@ -69,6 +77,7 @@ export const useMySales = (filters?: SaleFilters) => {
       );
       return response.data;
     },
+    enabled: options?.enabled ?? true,
   });
 };
 export interface CreateSalePayload {

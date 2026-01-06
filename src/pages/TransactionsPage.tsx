@@ -60,11 +60,21 @@ export default function TransactionsPage() {
 
   const { data: units } = useUnits(isAdminOrStockist);
 
+  // Always call all hooks unconditionally - only one will be enabled at a time
+  const adminQuery = useSales(filters, { enabled: isAdminOrStockist });
+  const managerQuery = useUnitSales(user?.assigned_unit_id || "", filters, {
+    enabled: isManagerOrUnitHead,
+  });
+  const staffQuery = useMySales(filters, {
+    enabled: !isAdminOrStockist && !isManagerOrUnitHead,
+  });
+
+  // Select the appropriate query based on role
   const salesQuery = isAdminOrStockist
-    ? useSales(filters)
+    ? adminQuery
     : isManagerOrUnitHead
-    ? useUnitSales(user?.assigned_unit_id || "", filters)
-    : useMySales(filters);
+    ? managerQuery
+    : staffQuery;
 
   // Safely handle transactions array - API returns {status, message, data: Sale[]} or {status, message, data: {data: Sale[]}}
   const rawData = salesQuery.data;
@@ -73,7 +83,18 @@ export default function TransactionsPage() {
   const paginationInfo = (() => {
     if (!rawData) return null;
     if (typeof rawData === "object" && "data" in rawData) {
-      const inner = (rawData as any).data;
+      const inner = (
+        rawData as {
+          data: {
+            current_page?: number;
+            last_page?: number;
+            total?: number;
+            from?: number | null;
+            to?: number | null;
+            links?: PaginationLink[];
+          };
+        }
+      ).data;
       if (inner && typeof inner === "object" && "current_page" in inner) {
         return {
           currentPage: inner.current_page as number,
@@ -94,7 +115,9 @@ export default function TransactionsPage() {
     if (Array.isArray(rawData)) return rawData;
     // If it's wrapped in ApiResponse (has .data property)
     if (typeof rawData === "object" && "data" in rawData) {
-      const inner = (rawData as any).data;
+      const inner = (
+        rawData as { data: { data?: Transaction[] } | Transaction[] }
+      ).data;
       // If inner.data is array (paginated response)
       if (
         inner &&

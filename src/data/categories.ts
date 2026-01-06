@@ -38,7 +38,7 @@ export const updateCategory = async ({ id, data }: UpdateCategoryPayload) => {
 };
 
 export const deleteCategory = async (id: number) => {
-  const response = await api.delete<ApiResponse<any>>(
+  const response = await api.delete<ApiResponse<null>>(
     `${API_ENDPOINTS.CATEGORIES}/${id}`
   );
   return response.data;

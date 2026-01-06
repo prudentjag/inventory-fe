@@ -29,7 +29,7 @@ export default function LoginPage() {
         toast.dismiss(toastId);
         toast.success("Welcome back!");
         navigate("/dashboard");
-      } catch (err) {
+      } catch (_err) {
         toast.dismiss(toastId);
         toast.error("Invalid credentials");
         setError("Invalid credentials");

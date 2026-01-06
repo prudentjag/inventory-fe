@@ -33,7 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       // Real API call
-      const response = await api.post<ApiResponse<LoginData>>(API_ENDPOINTS.LOGIN, { email, password });
+      const response = await api.post<ApiResponse<LoginData>>(
+        API_ENDPOINTS.LOGIN,
+        { email, password }
+      );
       const { access_token, user } = response.data.data;
 
       setUser(user);
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await api.post(API_ENDPOINTS.LOGOUT); // Attempt to invalidate on server
     } catch (error) {
       // Ignore logout errors (e.g. if token already expired)
-      console.warn('Logout API call failed', error);
+      console.warn("Logout API call failed", error);
     }
     setUser(null);
     localStorage.removeItem("inv_user");
@@ -66,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

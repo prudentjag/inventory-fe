@@ -70,12 +70,13 @@ export function InvoiceModal({
     }
   }, [paymentStatus]);
 
-  // Reset confirmed state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
+  // Reset confirmed state when modal closes - handled via onOpenChange callback
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
       setIsConfirmed(false);
     }
-  }, [isOpen]);
+    onOpenChange(open);
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -103,7 +104,7 @@ export function InvoiceModal({
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity" />
         <Dialog.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-sm translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 sm:rounded-lg max-h-[90vh] overflow-y-auto">

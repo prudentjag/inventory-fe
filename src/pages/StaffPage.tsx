@@ -36,7 +36,7 @@ export default function StaffPage() {
     setEditingUser(null);
   };
 
-  const getUnitName = (id?: number | null) => {
+  const _getUnitName = (id?: number | null) => {
     if (!id) return "Unassigned";
     return units?.find((u) => u.id === id)?.name || "Unknown Unit";
   };
@@ -50,14 +50,14 @@ export default function StaffPage() {
       String(u.id) === searchQuery
   );
 
-  const roleOptions = [
+  const _roleOptions = [
     { label: "Admin", value: "admin" },
     { label: "Manager", value: "manager" },
     { label: "Staff", value: "staff" },
     { label: "Auditor", value: "auditor" },
   ];
 
-  const unitOptions =
+  const _unitOptions =
     units?.map((u) => ({ label: u.name, value: String(u.id) })) || [];
 
   const columns: Column<User>[] = [

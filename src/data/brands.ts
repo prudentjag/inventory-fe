@@ -59,7 +59,7 @@ export const updateBrand = async ({ id, data }: UpdateBrandPayload) => {
   }
   if (data.items_per_set) {
     formData.append("items_per_set", String(data.items_per_set));
-  } 
+  }
   // Laravel requires _method for PUT with FormData
   formData.append("_method", "PUT");
 
@@ -76,7 +76,7 @@ export const updateBrand = async ({ id, data }: UpdateBrandPayload) => {
 };
 
 export const deleteBrand = async (id: number) => {
-  const response = await api.delete<ApiResponse<any>>(
+  const response = await api.delete<ApiResponse<null>>(
     `${API_ENDPOINTS.BRANDS}/${id}`
   );
   return response.data;

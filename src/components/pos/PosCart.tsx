@@ -6,6 +6,7 @@ import {
   Banknote,
   CreditCard,
 } from "lucide-react";
+import { useMemo } from "react";
 import type { CartItem } from "../../types";
 
 interface PosCartProps {
@@ -27,6 +28,9 @@ export function PosCart({
   onCheckout,
   onSelectPaymentMethod,
 }: PosCartProps) {
+  // Generate stable order ID
+  const orderId = useMemo(() => Math.floor(Math.random() * 10000), []);
+
   return (
     <div className="w-full lg:w-[380px] flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden flex-shrink-0">
       <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
@@ -35,7 +39,7 @@ export function PosCart({
           <h2 className="font-semibold">Current Order</h2>
         </div>
         <span className="text-xs font-mono bg-background px-2 py-1 rounded border border-border text-muted-foreground">
-          #ORD-{Math.floor(Math.random() * 10000)}
+          #ORD-{orderId}
         </span>
       </div>
 

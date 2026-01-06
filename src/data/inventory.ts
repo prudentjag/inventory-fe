@@ -11,7 +11,7 @@ export interface AddInventoryPayload {
 }
 
 export const addInventory = async (data: AddInventoryPayload) => {
-  const response = await api.post<ApiResponse<any>>(
+  const response = await api.post<ApiResponse<InventoryItem>>(
     API_ENDPOINTS.INVENTORY,
     data
   );

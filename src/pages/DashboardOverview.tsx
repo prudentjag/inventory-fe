@@ -211,8 +211,8 @@ export default function DashboardOverview() {
                       border: "none",
                       boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                     }}
-                    formatter={(value: any) => [
-                      `₦${Number(value).toLocaleString()}`,
+                    formatter={(value) => [
+                      `₦${Number(value ?? 0).toLocaleString()}`,
                       "Sales",
                     ]}
                   />
@@ -275,7 +275,23 @@ export default function DashboardOverview() {
   );
 }
 
-function StatCard({ title, value, trend, trendUp, icon, bgClass }: any) {
+interface StatCardProps {
+  title: string;
+  value: string;
+  trend: string;
+  trendUp: boolean;
+  icon: React.ReactNode;
+  bgClass: string;
+}
+
+function StatCard({
+  title,
+  value,
+  trend,
+  trendUp,
+  icon,
+  bgClass,
+}: StatCardProps) {
   return (
     <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
       <div className="flex items-start justify-between mb-4">

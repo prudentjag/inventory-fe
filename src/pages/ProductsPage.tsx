@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Filter, Pencil, Trash, Package } from "lucide-react";
+import { Plus, Filter, Pencil, Package } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useProducts } from "../data/products";
 import { ProductModal } from "../components/modals/ProductModal";
@@ -10,7 +10,7 @@ import { DataTable, type Column } from "../components/ui/DataTable";
 export default function ProductsPage() {
   const { user } = useAuth();
   const { data: products = [], isLoading } = useProducts();
-console.log(products);
+  console.log(products);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);

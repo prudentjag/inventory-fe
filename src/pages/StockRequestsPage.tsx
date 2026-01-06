@@ -35,7 +35,9 @@ export function StockRequestsPage() {
   const handleApprove = (request: StockRequest) => {
     approveMutation.mutate(request.id, {
       onSuccess: () => toast.success("Request approved successfully"),
-      onError: (error: any) =>
+      onError: (
+        error: Error & { response?: { data?: { message?: string } } }
+      ) =>
         toast.error(
           error.response?.data?.message || "Failed to approve request"
         ),
@@ -48,7 +50,9 @@ export function StockRequestsPage() {
       { id: request.id, data: notes ? { notes } : undefined },
       {
         onSuccess: () => toast.success("Request rejected"),
-        onError: (error: any) =>
+        onError: (
+          error: Error & { response?: { data?: { message?: string } } }
+        ) =>
           toast.error(
             error.response?.data?.message || "Failed to reject request"
           ),

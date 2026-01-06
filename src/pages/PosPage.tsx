@@ -11,7 +11,7 @@ import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
 import { InvoiceModal } from "../components/pos/InvoiceModal";
 import { useCreateSale } from "../data/sales";
-import type { ApiResponse, Sale, VirtualAccountDetails } from "../types";
+import type { Sale, VirtualAccountDetails } from "../types";
 
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -143,7 +143,7 @@ export default function PosPage() {
     createSale(
       {
         unit_id: effectiveUnitId,
-        payment_method: paymentMethod as any,
+        payment_method: paymentMethod,
         items: cart.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
@@ -151,26 +151,27 @@ export default function PosPage() {
         })),
       },
       {
-        onSuccess: (response: ApiResponse<Sale> | any) => {
+        onSuccess: (response) => {
           // Handle nested response structure from Monnify
-          const sale = response.data?.sale || response.data;
-          const accountDetails = response.data?.account_details;
+          const responseData = response.data as Sale & {
+            sale?: Sale;
+            account_details?: VirtualAccountDetails;
+          };
+          const sale = responseData.sale || responseData;
+          const accountDetails = responseData.account_details;
 
           const isMonnifyPending =
             paymentMethod === "monnify" && accountDetails;
 
-          const orderData = {
+          setCurrentOrder({
             items: [...cart],
             total: cartTotal,
             orderId: (sale?.id || "N/A").toString(),
             invoiceNumber: sale?.invoice_number,
             checkoutUrl: sale?.payment_data?.checkoutUrl,
             accountDetails: accountDetails,
-            isPending: isMonnifyPending,
-          };
-
-          // Save order data for invoice
-          setCurrentOrder(orderData);
+            isPending: !!(paymentMethod === "monnify" && accountDetails),
+          });
 
           // Show appropriate message
           if (isMonnifyPending) {
@@ -190,7 +191,9 @@ export default function PosPage() {
           // Clear cart
           setCart([]);
         },
-        onError: (error: any) => {
+        onError: (
+          error: Error & { response?: { data?: { message?: string } } }
+        ) => {
           toast.error(
             error.response?.data?.message ||
               "Failed to process payment. Please try again."
