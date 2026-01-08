@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const BASE_URL = "https://potatoes-falling-upcoming-builds.trycloudflare.com";
+export const BASE_URL = import.meta.env.VITE_APP_URL || "http://localhost:8000";
 const api = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
