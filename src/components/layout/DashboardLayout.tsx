@@ -148,7 +148,7 @@ export default function DashboardLayout() {
             </>
           )}
 
-          {user?.role === "admin" && (
+          {user?.role === "admin" || user?.role === "stockist" && (
             <NavItem
               to="/dashboard/settings"
               icon={<Settings size={20} />}
