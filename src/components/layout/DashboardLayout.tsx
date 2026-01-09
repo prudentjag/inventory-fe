@@ -113,14 +113,14 @@ export default function DashboardLayout() {
           {/* Admin & Manager sections */}
           {["admin", "manager", "stockist"].includes(user?.role || "") && (
             <>
-              {/* {user?.role === "admin" && (
+              {["admin", "stockist"].includes(user?.role || "") && (
                 <NavItem
                   to="/dashboard/products"
                   icon={<Archive size={20} />}
                   label="Product Catalog"
                   isOpen={isSidebarOpen}
                 />
-              )} */}
+              )}
               <NavItem
                 to="/dashboard/inventory"
                 icon={<Package size={20} />}
@@ -148,14 +148,15 @@ export default function DashboardLayout() {
             </>
           )}
 
-          {user?.role === "admin" || user?.role === "stockist" && (
-            <NavItem
-              to="/dashboard/settings"
-              icon={<Settings size={20} />}
-              label="Settings"
-              isOpen={isSidebarOpen}
-            />
-          )}
+          {user?.role === "admin" ||
+            (user?.role === "stockist" && (
+              <NavItem
+                to="/dashboard/settings"
+                icon={<Settings size={20} />}
+                label="Settings"
+                isOpen={isSidebarOpen}
+              />
+            ))}
         </nav>
 
         <div className="p-4 border-t border-border">
