@@ -69,9 +69,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         sku: values.sku,
         brand_id: Number(values.brand_id),
         size: values.size,
-        items_per_set: values.items_per_set
-          ? Number(values.items_per_set)
-          : undefined,
+        items_per_set: Number(values.items_per_set) || 12,
         selling_price: Number(values.price),
         cost_price: Number(values.cost_price),
         unit_of_measurement: values.unit_of_measurement,
