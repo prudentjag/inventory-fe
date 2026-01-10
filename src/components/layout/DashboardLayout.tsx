@@ -18,6 +18,7 @@ import {
   Building2,
   CalendarDays,
   X,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -109,6 +110,15 @@ export default function DashboardLayout() {
               onClick={closeMobileMenu}
             />
           )}
+          {["admin", "stockist"].includes(user?.role || "") && (
+            <NavItem
+              to="/dashboard/stock-insights"
+              icon={<BarChart2 size={20} />}
+              label="Stock Insights"
+              isOpen={true}
+              onClick={closeMobileMenu}
+            />
+          )}
           <NavItem
             to="/dashboard/stock-requests"
             icon={<ClipboardList size={20} />}
@@ -173,7 +183,7 @@ export default function DashboardLayout() {
             </>
           )}
 
-          {['admin', 'manager', 'stockist'].includes(user?.role || '') && (
+          {["admin", "manager", "stockist"].includes(user?.role || "") && (
             <NavItem
               to="/dashboard/settings"
               icon={<Settings size={20} />}
@@ -252,6 +262,12 @@ export default function DashboardLayout() {
                 to="/dashboard/central-stock"
                 icon={<Warehouse size={20} />}
                 label="Central Stock"
+                isOpen={isSidebarOpen}
+              />
+              <NavItem
+                to="/dashboard/stock-insights"
+                icon={<BarChart2 size={20} />}
+                label="Stock Insights"
                 isOpen={isSidebarOpen}
               />
             </>

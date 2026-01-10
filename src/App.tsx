@@ -18,6 +18,7 @@ import { StockRequestsPage } from "./pages/StockRequestsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import BookingsPage from "./pages/BookingsPage";
+import { StockInsightsPage } from "./pages/StockInsightsPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ export default function App() {
               <Route path="staff" element={<StaffPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="central-stock" element={<CentralStockPage />} />
+              <Route path="stock-insights" element={<StockInsightsPage />} />
               <Route path="stock-requests" element={<StockRequestsPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="facilities" element={<FacilitiesPage />} />

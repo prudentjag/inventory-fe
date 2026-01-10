@@ -71,17 +71,28 @@ export function CentralStockPage() {
       ),
     },
     {
-      header: "In Stock",
+      header: "In Stock (Sets)",
       cell: (item) => (
-        <span className="font-mono text-lg font-bold text-primary">
-          {item.quantity.toLocaleString()}
-        </span>
+        <div className="text-right">
+          <span className="font-mono text-lg font-bold text-primary">
+            {item.quantity.toLocaleString()}
+          </span>
+          {item.product?.items_per_set && (
+            <p className="text-xs text-muted-foreground">
+              ={" "}
+              {(
+                item.quantity * Number(item.product.items_per_set)
+              ).toLocaleString()}{" "}
+              items
+            </p>
+          )}
+        </div>
       ),
       className: "text-right",
       headerClassName: "text-right",
     },
     {
-      header: "Low Stock Alert",
+      header: "Low Stock Alert (Sets)",
       cell: (item) => (
         <span className="font-mono text-muted-foreground">
           {item.low_stock_threshold}
@@ -157,8 +168,11 @@ export function CentralStockPage() {
 
   // Stats
   const totalItems = stock?.length || 0;
-  const totalQuantity =
-    stock?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const totalSets = stock?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const totalIndividualItems = stockWithProducts.reduce((sum, item) => {
+    const itemsPerSet = Number(item.product?.items_per_set) || 1;
+    return sum + item.quantity * itemsPerSet;
+  }, 0);
   const lowStockCount =
     stock?.filter((item) => item.quantity <= item.low_stock_threshold).length ||
     0;
@@ -192,11 +206,12 @@ export function CentralStockPage() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium">
-              Total Quantity
+              Total Sets (Crates)
             </p>
-            <h3 className="text-2xl font-bold">
-              {totalQuantity.toLocaleString()}
-            </h3>
+            <h3 className="text-2xl font-bold">{totalSets.toLocaleString()}</h3>
+            <p className="text-xs text-muted-foreground">
+              = {totalIndividualItems.toLocaleString()} individual items
+            </p>
           </div>
         </div>
         <div className="bg-card p-4 rounded-xl border border-border flex items-center gap-4 shadow-sm">
