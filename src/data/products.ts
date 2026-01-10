@@ -63,3 +63,21 @@ export const useUpdateProduct = () => {
     },
   });
 };
+
+export const deleteProduct = async (id: number | string) => {
+  const response = await api.delete<ApiResponse<void>>(
+    `${API_ENDPOINTS.PRODUCTS}/${id}`
+  );
+  return response.data;
+};
+
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Plus, Filter, Pencil, Package } from "lucide-react";
+import { Plus, Filter, Pencil, Package, Trash2 } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton";
-import { useProducts } from "../data/products";
+import { useProducts, useDeleteProduct } from "../data/products";
 import { ProductModal } from "../components/modals/ProductModal";
 import type { Product } from "../types";
 import { useAuth } from "../context/AuthContext";
@@ -10,7 +10,7 @@ import { DataTable, type Column } from "../components/ui/DataTable";
 export default function ProductsPage() {
   const { user } = useAuth();
   const { data: products = [], isLoading } = useProducts();
-  console.log(products);
+  const deleteProductMutation = useDeleteProduct();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -21,6 +21,12 @@ export default function ProductsPage() {
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = (product: Product) => {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -93,14 +99,10 @@ export default function ProductsPage() {
       ),
     },
     {
-      header: "Item per Set (crate)",
+      header: "Item per Set (crate",
       accessorKey: "items_per_set",
       className: "font-mono",
-      cell: (product) => (
-        <span>
-          {product.items_per_set ?? "-"}
-        </span>
-      ),
+      cell: (product) => <span>{product.items_per_set ?? "-"}</span>,
     },
     {
       header: "Actions",
@@ -119,6 +121,17 @@ export default function ProductsPage() {
                 title="Edit"
               >
                 <Pencil size={16} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(product);
+                }}
+                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                title="Delete"
+                disabled={deleteProductMutation.isPending}
+              >
+                <Trash2 size={16} />
               </button>
             </>
           )}
