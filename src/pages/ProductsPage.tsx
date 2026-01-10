@@ -93,6 +93,16 @@ export default function ProductsPage() {
       ),
     },
     {
+      header: "Item per Set (crate)",
+      accessorKey: "items_per_set",
+      className: "font-mono",
+      cell: (product) => (
+        <span>
+          {product.items_per_set ?? "-"}
+        </span>
+      ),
+    },
+    {
       header: "Actions",
       className: "text-right",
       headerClassName: "text-right",
