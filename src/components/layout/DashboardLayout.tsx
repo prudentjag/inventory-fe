@@ -17,6 +17,7 @@ import {
   FileText,
   Building2,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -25,15 +26,179 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Sidebar */}
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out md:hidden",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="h-16 flex items-center justify-between px-6 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
+              IM
+            </div>
+            <span className="font-bold text-lg tracking-tight">InvManager</span>
+          </div>
+          <button
+            onClick={closeMobileMenu}
+            className="p-2 hover:bg-accent rounded-md text-foreground"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+          <NavItem
+            to="/dashboard"
+            end
+            icon={<LayoutDashboard size={20} />}
+            label="Dashboard"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
+            to="/dashboard/pos"
+            icon={<ShoppingCart size={20} />}
+            label="POS"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
+            to="/dashboard/transactions"
+            icon={<CreditCard size={20} />}
+            label="Transactions"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
+            to="/dashboard/invoices"
+            icon={<FileText size={20} />}
+            label="Invoices"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+
+          {["admin", "stockist"].includes(user?.role || "") && (
+            <NavItem
+              to="/dashboard/central-stock"
+              icon={<Warehouse size={20} />}
+              label="Central Stock"
+              isOpen={true}
+              onClick={closeMobileMenu}
+            />
+          )}
+          <NavItem
+            to="/dashboard/stock-requests"
+            icon={<ClipboardList size={20} />}
+            label="Stock Requests"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
+            to="/dashboard/facilities"
+            icon={<Building2 size={20} />}
+            label="Facilities"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
+            to="/dashboard/bookings"
+            icon={<CalendarDays size={20} />}
+            label="Bookings"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+
+          {["admin", "manager", "stockist"].includes(user?.role || "") && (
+            <>
+              {["admin", "stockist"].includes(user?.role || "") && (
+                <NavItem
+                  to="/dashboard/products"
+                  icon={<Archive size={20} />}
+                  label="Product Catalog"
+                  isOpen={true}
+                  onClick={closeMobileMenu}
+                />
+              )}
+              <NavItem
+                to="/dashboard/inventory"
+                icon={<Package size={20} />}
+                label="Unit Inventory"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+              <NavItem
+                to="/dashboard/staff"
+                icon={<Users size={20} />}
+                label="Staff"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+              <NavItem
+                to="/dashboard/units"
+                icon={<Store size={20} />}
+                label="Units"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+              <NavItem
+                to="/dashboard/audit-logs"
+                icon={<HistoryIcon size={20} />}
+                label="Central Audit"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+            </>
+          )}
+
+          {(user?.role === "admin" || user?.role === "stockist") && (
+            <NavItem
+              to="/dashboard/settings"
+              icon={<Settings size={20} />}
+              label="Settings"
+              isOpen={true}
+              onClick={closeMobileMenu}
+            />
+          )}
+        </nav>
+
+        <div className="p-4 border-t border-border">
+          <button
+            onClick={() => {
+              closeMobileMenu();
+              handleLogout();
+            }}
+            className="flex items-center gap-3 w-full p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop Sidebar */}
       <aside
         className={cn(
           "hidden md:flex bg-card border-r border-border transition-all duration-300 flex-col z-20",
@@ -177,9 +342,17 @@ export default function DashboardLayout() {
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 z-10">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 hover:bg-accent rounded-md text-foreground md:hidden"
+          >
+            <Menu size={20} />
+          </button>
+          {/* Desktop sidebar toggle */}
           <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-accent rounded-md text-foreground"
+            className="p-2 hover:bg-accent rounded-md text-foreground hidden md:block"
           >
             <Menu size={20} />
           </button>
@@ -230,17 +403,20 @@ function NavItem({
   label,
   isOpen,
   end,
+  onClick,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   isOpen: boolean;
   end?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onClick}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-3 p-3 rounded-md transition-all duration-200 group",
