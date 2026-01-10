@@ -64,11 +64,14 @@ export function StockInsightsPage() {
     if (!stock) return null;
 
     const totalProducts = stock.length;
-    const totalSets = stock.reduce((sum, item) => sum + item.quantity, 0);
+    const totalSets = stock.reduce(
+      (sum, item) => sum + Number(item.quantity),
+      0
+    );
     const totalItems = stock.reduce((sum, item) => {
       const itemsPerSet =
         Number((item as StockWithProduct).product?.items_per_set) || 1;
-      return sum + item.quantity * itemsPerSet;
+      return sum + Number(item.quantity) * itemsPerSet;
     }, 0);
     const lowStockAlerts = stock.filter(
       (item) => item.quantity <= item.low_stock_threshold
@@ -97,8 +100,8 @@ export function StockInsightsPage() {
 
       const existing = brandTotals.get(brandName) || { sets: 0, items: 0 };
       brandTotals.set(brandName, {
-        sets: existing.sets + item.quantity,
-        items: existing.items + item.quantity * itemsPerSet,
+        sets: existing.sets + Number(item.quantity),
+        items: existing.items + Number(item.quantity) * itemsPerSet,
       });
     });
 
@@ -130,8 +133,8 @@ export function StockInsightsPage() {
         items: 0,
       };
       categoryTotals.set(categoryName, {
-        sets: existing.sets + item.quantity,
-        items: existing.items + item.quantity * itemsPerSet,
+        sets: existing.sets + Number(item.quantity),
+        items: existing.items + Number(item.quantity) * itemsPerSet,
       });
     });
 
@@ -169,10 +172,11 @@ export function StockInsightsPage() {
         return {
           id: item.id,
           name: stockItem.product?.name || "Unknown",
-          quantity: item.quantity,
+          quantity: Number(item.quantity),
           itemsPerSet: Number(stockItem.product?.items_per_set) || 1,
           totalItems:
-            item.quantity * (Number(stockItem.product?.items_per_set) || 1),
+            Number(item.quantity) *
+            (Number(stockItem.product?.items_per_set) || 1),
         };
       })
       .sort((a, b) => b.quantity - a.quantity)

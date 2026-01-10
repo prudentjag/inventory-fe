@@ -168,7 +168,8 @@ export function CentralStockPage() {
 
   // Stats
   const totalItems = stock?.length || 0;
-  const totalSets = stock?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const totalSets =
+    stock?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
   const totalIndividualItems = stockWithProducts.reduce((sum, item) => {
     const itemsPerSet = Number(item.product?.items_per_set) || 1;
     return sum + item.quantity * itemsPerSet;
