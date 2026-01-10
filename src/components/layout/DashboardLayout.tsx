@@ -173,7 +173,7 @@ export default function DashboardLayout() {
             </>
           )}
 
-          {(user?.role === "admin" || user?.role === "stockist") && (
+          {['admin', 'manager', 'stockist'].includes(user?.role || '') && (
             <NavItem
               to="/dashboard/settings"
               icon={<Settings size={20} />}
