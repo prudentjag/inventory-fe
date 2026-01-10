@@ -16,7 +16,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const canEdit = user?.role === "admin"; // Only admin should edit global catalog
+  const canEdit = user?.role === "admin" || user?.role === "stockist"; // Only admin should edit global catalog
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
