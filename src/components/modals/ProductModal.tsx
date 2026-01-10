@@ -26,10 +26,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     sku: Yup.string().required("Required"),
     brand_id: Yup.number().required("Required"),
     size: Yup.string()
-      .oneOf(
-        ["small", "medium", "large", "extra large"],
-        "Must be small, medium, or large"
-      )
+      .oneOf(["small", "medium", "big"], "Must be small, medium, or big")
       .nullable(),
     items_per_set: Yup.number().min(1, "Must be at least 1").nullable(),
     price: Yup.number().positive("Must be positive").required("Required"),
@@ -234,7 +231,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   onBlur={formik.handleBlur}
                 >
                   <option value="">Select Size</option>
-                  {["small", "medium", "large", "extra large"].map((size) => (
+                  {["small", "medium", "big"].map((size) => (
                     <option key={size} value={size}>
                       {size}
                     </option>
