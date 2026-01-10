@@ -125,11 +125,6 @@ function BrandsManager() {
       cell: (brand) => <span className="font-medium">{brand.name}</span>,
     },
     {
-      header: "Item per set",
-      accessorKey: "items_per_set",
-      cell: (brand) => <span className="font-medium">{brand.items_per_set}</span>,
-    },
-    {
       header: "Actions",
       className: "text-left",
       cell: (brand) => (

@@ -33,7 +33,6 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
       id: 0,
       name: "",
       category_id: "",
-      items_per_set: "",
     },
     enableReinitialize: true,
     validationSchema,
@@ -44,9 +43,6 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
           ? Number(values.category_id)
           : undefined,
         image: imageFile,
-        items_per_set: values.items_per_set
-          ? Number(values.items_per_set)
-          : undefined,
       };
 
       if (brand) {
@@ -153,21 +149,6 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="items_per_set" className="text-sm font-medium">
-                Items per Set (Optional)
-              </label>
-              <input
-                id="items_per_set"
-                name="items_per_set"
-                type="number"
-                className="w-full h-12 px-3 rounded-md border border-input bg-background"
-                value={formik.values.items_per_set || ""}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-              />
             </div>
 
             {/* Image Upload */}

@@ -37,7 +37,6 @@ export interface Brand {
   image_path?: string | null;
   image_url?: string | null;
   category_id?: number | null;
-  items_per_set?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -70,6 +69,7 @@ export interface Product {
   sku: string;
   barcode?: string;
   size?: string;
+  items_per_set?: number; // Number of items in each set (e.g., 12 bottles per carton)
   brand?: string | Brand; // Can be string or nested Brand object from API
   brand_id?: number;
   category?: string | Category; // Can be string or nested Category object from API

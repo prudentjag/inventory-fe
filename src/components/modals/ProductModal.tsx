@@ -31,6 +31,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         "Must be small, medium, or large"
       )
       .nullable(),
+    items_per_set: Yup.number().min(1, "Must be at least 1").nullable(),
     price: Yup.number().positive("Must be positive").required("Required"),
     cost_price: Yup.number().positive("Must be positive").required("Required"),
     unit_of_measurement: Yup.string().required("Required"),
@@ -45,6 +46,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       brand_id: "",
       price: 0,
       size: "",
+      items_per_set: 12,
       cost_price: 0,
       stock_quantity: 0,
       unit_of_measurement: "bottle",
@@ -60,6 +62,9 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         sku: values.sku,
         brand_id: Number(values.brand_id),
         size: values.size,
+        items_per_set: values.items_per_set
+          ? Number(values.items_per_set)
+          : undefined,
         selling_price: Number(values.price),
         cost_price: Number(values.cost_price),
         unit_of_measurement: values.unit_of_measurement,
@@ -194,20 +199,28 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
-                name="cost_price"
-                label="Cost Price"
+                name="items_per_set"
+                label="Items per Set"
                 type="number"
                 formik={formik}
+                placeholder="e.g. 12"
               />
+
               <CustomFormInput
-                name="price"
-                label="Selling Price"
+                name="cost_price"
+                label="Cost Price"
                 type="number"
                 formik={formik}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <CustomFormInput
+                name="price"
+                label="Selling Price"
+                type="number"
+                formik={formik}
+              />
               <div className="space-y-2">
                 <label htmlFor="size" className="text-sm font-medium">
                   Size
@@ -233,6 +246,9 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
                 name="unit_of_measurement"
                 label="Unit (e.g. Bottle, Pack)"
