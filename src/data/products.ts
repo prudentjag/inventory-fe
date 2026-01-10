@@ -3,9 +3,22 @@ import api from "../services/api";
 import { API_ENDPOINTS } from "./endpoints";
 import type { ApiResponse, Product } from "../types";
 
+export interface UpdateProductPayload {
+  id: number | string;
+  data: Partial<Product>;
+}
+
 export const createProduct = async (data: Partial<Product>) => {
   const response = await api.post<ApiResponse<Product>>(
     API_ENDPOINTS.PRODUCTS,
+    data
+  );
+  return response.data;
+};
+
+export const updateProduct = async ({ id, data }: UpdateProductPayload) => {
+  const response = await api.put<ApiResponse<Product>>(
+    `${API_ENDPOINTS.PRODUCTS}/${id}`,
     data
   );
   return response.data;
@@ -34,6 +47,17 @@ export const useCreateProduct = () => {
 
   return useMutation({
     mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },

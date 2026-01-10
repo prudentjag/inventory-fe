@@ -6,7 +6,7 @@ import { Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFormInput } from "../form/CustomFormInput";
 import { BarcodeScanner } from "../form/BarcodeScanner";
-import { useCreateProduct } from "../../data/products";
+import { useCreateProduct, useUpdateProduct } from "../../data/products";
 import { useBrands } from "../../data/brands";
 import type { Product } from "../../types";
 
@@ -19,6 +19,7 @@ interface ProductModalProps {
 export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   const [showScanner, setShowScanner] = useState(false);
   const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
   const { data: brands = [] } = useBrands();
 
   const validationSchema = Yup.object({
@@ -32,25 +33,34 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     price: Yup.number().positive("Must be positive").required("Required"),
     cost_price: Yup.number().positive("Must be positive").required("Required"),
     unit_of_measurement: Yup.string().required("Required"),
-    quantity: Yup.number().min(1, "Must be at least 1").required("Required"),
+    quantity: Yup.number().min(1, "Must be at least 1").nullable(),
   });
 
   const formik = useFormik({
-    initialValues: product || {
-      id: "",
-      name: "",
-      sku: "",
-      brand_id: "",
-      price: 0,
-      size: "",
-      items_per_set: 12,
-      cost_price: 0,
-      stock_quantity: 0,
-      unit_of_measurement: "bottle",
-      image_url: "",
-      trackable: true,
-      quantity: 1,
-    },
+    initialValues: product
+      ? {
+          ...product,
+          brand_id:
+            product.brand_id ||
+            (typeof product.brand === "object" ? product.brand?.id : ""),
+          price: product.price ?? product.selling_price ?? 0,
+          items_per_set: product.items_per_set ?? 12,
+        }
+      : {
+          id: "",
+          name: "",
+          sku: "",
+          brand_id: "",
+          price: 0,
+          size: "",
+          items_per_set: 12,
+          cost_price: 0,
+          stock_quantity: 0,
+          unit_of_measurement: "bottle",
+          image_url: "",
+          trackable: true,
+          quantity: 1,
+        },
     enableReinitialize: true,
     validationSchema,
     onSubmit: async (values) => {
@@ -66,23 +76,38 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         cost_price: Number(values.cost_price),
         unit_of_measurement: values.unit_of_measurement,
         trackable: true,
-        quantity: Number(values.quantity),
       };
 
       if (product) {
-        toast.info("Edit not implemented yet");
+        updateProductMutation.mutate(
+          { id: product.id, data: payload },
+          {
+            onSuccess: () => {
+              toast.success("Product updated successfully");
+              handleClose();
+            },
+            onError: (error: any) => {
+              toast.error(
+                error.response?.data?.message || "Failed to update product"
+              );
+            },
+          }
+        );
       } else {
-        createProductMutation.mutate(payload as any, {
-          onSuccess: () => {
-            toast.success("Product created successfully");
-            handleClose();
-          },
-          onError: (error: any) => {
-            toast.error(
-              error.response?.data?.message || "Failed to create product"
-            );
-          },
-        });
+        createProductMutation.mutate(
+          { ...payload, quantity: Number(values.quantity) } as any,
+          {
+            onSuccess: () => {
+              toast.success("Product created successfully");
+              handleClose();
+            },
+            onError: (error: any) => {
+              toast.error(
+                error.response?.data?.message || "Failed to create product"
+              );
+            },
+          }
+        );
       }
     },
   });
@@ -263,10 +288,14 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               </button>
               <button
                 type="submit"
-                disabled={createProductMutation.isPending}
+                disabled={
+                  createProductMutation.isPending ||
+                  updateProductMutation.isPending
+                }
                 className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
               >
-                {createProductMutation.isPending ? (
+                {createProductMutation.isPending ||
+                updateProductMutation.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : product ? (
                   "Save Changes"
