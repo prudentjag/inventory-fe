@@ -64,6 +64,8 @@ export interface CreateTicketPayload {
   check_in_time: string;
   amount: number;
   payment_method: PaymentMethod;
+  has_boot?: boolean;
+  boot_amount?: number;
   notes?: string;
 }
 

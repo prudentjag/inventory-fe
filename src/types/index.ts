@@ -308,6 +308,8 @@ export interface FacilityTicket {
   sale_id?: number;
   sale?: Sale;
   created_by?: User;
+  has_boot?: boolean;
+  boot_amount?: number | string;
   created_at?: string;
   updated_at?: string;
 }

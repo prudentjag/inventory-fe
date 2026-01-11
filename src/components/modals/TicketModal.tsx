@@ -36,6 +36,8 @@ export default function TicketModal({
     check_in_time: string;
     amount: number;
     payment_method: PaymentMethod;
+    has_boot?: boolean;
+    boot_amount?: number;
     ticket_id?: number;
   } | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -56,6 +58,13 @@ export default function TicketModal({
     payment_method: Yup.string()
       .oneOf(["cash", "pos", "transfer"])
       .required("Required"),
+    has_boot: Yup.boolean(),
+    boot_amount: Yup.number().when("has_boot", {
+      is: true,
+      then: (schema) =>
+        schema.min(1, "Boot amount required").required("Required"),
+      otherwise: (schema) => schema.nullable(),
+    }),
     notes: Yup.string().nullable(),
   });
 
@@ -68,6 +77,8 @@ export default function TicketModal({
       check_in_time: new Date().toTimeString().slice(0, 5),
       amount: "",
       payment_method: "cash" as PaymentMethod,
+      has_boot: false,
+      boot_amount: "",
       notes: "",
     },
     validationSchema,
@@ -79,8 +90,12 @@ export default function TicketModal({
           customer_phone: values.customer_phone,
           ticket_date: values.ticket_date,
           check_in_time: values.check_in_time,
-          amount: Number(values.amount),
+          amount:
+            Number(values.amount) +
+            (values.has_boot ? Number(values.boot_amount) : 0),
           payment_method: values.payment_method,
+          has_boot: values.has_boot,
+          boot_amount: values.has_boot ? Number(values.boot_amount) : undefined,
           notes: values.notes || undefined,
         });
 
@@ -91,8 +106,12 @@ export default function TicketModal({
           customer_phone: values.customer_phone,
           ticket_date: values.ticket_date,
           check_in_time: values.check_in_time,
-          amount: Number(values.amount),
+          amount:
+            Number(values.amount) +
+            (values.has_boot ? Number(values.boot_amount) : 0),
           payment_method: values.payment_method,
+          has_boot: values.has_boot,
+          boot_amount: values.has_boot ? Number(values.boot_amount) : undefined,
           ticket_id: result?.data?.id,
         });
         setShowPrintView(true);
@@ -177,6 +196,12 @@ export default function TicketModal({
               margin-top: 8px;
               padding-top: 8px;
             }
+            .boot-info {
+              font-size: 11px;
+              color: #444;
+              font-style: italic;
+              margin-top: 2px;
+            }
             .ticket-footer {
               margin-top: 12px;
               font-size: 12px;
@@ -258,6 +283,16 @@ export default function TicketModal({
                         {soldTicketData.payment_method}
                       </span>
                     </div>
+                    {soldTicketData.has_boot && (
+                      <div className="ticket-row boot-info">
+                        <span className="text-muted-foreground">
+                          Incl. Boot:
+                        </span>
+                        <span>
+                          ₦{Number(soldTicketData.boot_amount).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                     <div className="ticket-row total flex justify-between font-bold text-base border-t border-border pt-2 mt-2">
                       <span>Total:</span>
                       <span>₦{soldTicketData.amount.toLocaleString()}</span>
@@ -445,6 +480,51 @@ export default function TicketModal({
                   </div>
                 </div>
 
+                {/* Boot Option */}
+                <div className="space-y-3 p-3 border border-border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="has_boot"
+                      name="has_boot"
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      checked={formik.values.has_boot}
+                      onChange={formik.handleChange}
+                    />
+                    <label htmlFor="has_boot" className="text-sm font-medium">
+                      Customer wants Boot?
+                    </label>
+                  </div>
+
+                  {formik.values.has_boot && (
+                    <div className="space-y-2 pl-6 animate-in slide-in-from-top-1 duration-200">
+                      <label
+                        htmlFor="boot_amount"
+                        className="text-sm font-medium"
+                      >
+                        Boot Amount (₦)
+                      </label>
+                      <input
+                        type="number"
+                        id="boot_amount"
+                        name="boot_amount"
+                        min="0"
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                        placeholder="e.g. 500"
+                        value={formik.values.boot_amount}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                      />
+                      {formik.touched.boot_amount &&
+                        formik.errors.boot_amount && (
+                          <p className="text-sm text-destructive">
+                            {formik.errors.boot_amount}
+                          </p>
+                        )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Notes */}
                 <div className="space-y-2">
                   <label htmlFor="notes" className="text-sm font-medium">
@@ -468,7 +548,13 @@ export default function TicketModal({
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Total:</span>
                       <span className="text-lg font-bold">
-                        ₦{Number(formik.values.amount).toLocaleString()}
+                        ₦
+                        {(
+                          Number(formik.values.amount) +
+                          (formik.values.has_boot
+                            ? Number(formik.values.boot_amount || 0)
+                            : 0)
+                        ).toLocaleString()}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">

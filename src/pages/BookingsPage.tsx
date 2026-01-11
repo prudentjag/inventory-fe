@@ -1013,6 +1013,13 @@ export default function BookingsPage() {
                       <p className="font-bold text-lg">
                         ₦{getAmount(selectedTicket).toLocaleString()}
                       </p>
+                      {selectedTicket.has_boot && (
+                        <p className="text-xs text-muted-foreground italic">
+                          (Includes ₦
+                          {Number(selectedTicket.boot_amount).toLocaleString()}{" "}
+                          boot)
+                        </p>
+                      )}
                     </div>
                     <div>
                       <span className="text-muted-foreground block mb-1">
