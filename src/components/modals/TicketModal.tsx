@@ -36,7 +36,7 @@ export default function TicketModal({
     check_in_time: string;
     amount: number;
     payment_method: PaymentMethod;
-    has_boot?: boolean;
+    with_boot?: boolean;
     boot_amount?: number;
     ticket_id?: number;
   } | null>(null);
@@ -58,8 +58,8 @@ export default function TicketModal({
     payment_method: Yup.string()
       .oneOf(["cash", "pos", "transfer"])
       .required("Required"),
-    has_boot: Yup.boolean(),
-    boot_amount: Yup.number().when("has_boot", {
+    with_boot: Yup.boolean(),
+    boot_amount: Yup.number().when("with_boot", {
       is: true,
       then: (schema) =>
         schema.min(1, "Boot amount required").required("Required"),
@@ -77,7 +77,7 @@ export default function TicketModal({
       check_in_time: new Date().toTimeString().slice(0, 5),
       amount: "",
       payment_method: "cash" as PaymentMethod,
-      has_boot: false,
+      with_boot: false,
       boot_amount: "",
       notes: "",
     },
@@ -92,10 +92,12 @@ export default function TicketModal({
           check_in_time: values.check_in_time,
           amount:
             Number(values.amount) +
-            (values.has_boot ? Number(values.boot_amount) : 0),
+            (values.with_boot ? Number(values.boot_amount) : 0),
           payment_method: values.payment_method,
-          has_boot: values.has_boot,
-          boot_amount: values.has_boot ? Number(values.boot_amount) : undefined,
+          with_boot: values.with_boot,
+          boot_amount: values.with_boot
+            ? Number(values.boot_amount)
+            : undefined,
           notes: values.notes || undefined,
         });
 
@@ -108,10 +110,12 @@ export default function TicketModal({
           check_in_time: values.check_in_time,
           amount:
             Number(values.amount) +
-            (values.has_boot ? Number(values.boot_amount) : 0),
+            (values.with_boot ? Number(values.boot_amount) : 0),
           payment_method: values.payment_method,
-          has_boot: values.has_boot,
-          boot_amount: values.has_boot ? Number(values.boot_amount) : undefined,
+          with_boot: values.with_boot,
+          boot_amount: values.with_boot
+            ? Number(values.boot_amount)
+            : undefined,
           ticket_id: result?.data?.id,
         });
         setShowPrintView(true);
@@ -283,7 +287,7 @@ export default function TicketModal({
                         {soldTicketData.payment_method}
                       </span>
                     </div>
-                    {soldTicketData.has_boot && (
+                    {soldTicketData.with_boot && (
                       <div className="ticket-row boot-info">
                         <span className="text-muted-foreground">
                           Incl. Boot:
@@ -485,18 +489,18 @@ export default function TicketModal({
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      id="has_boot"
-                      name="has_boot"
+                      id="with_boot"
+                      name="with_boot"
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      checked={formik.values.has_boot}
+                      checked={formik.values.with_boot}
                       onChange={formik.handleChange}
                     />
-                    <label htmlFor="has_boot" className="text-sm font-medium">
+                    <label htmlFor="with_boot" className="text-sm font-medium">
                       Customer wants Boot?
                     </label>
                   </div>
 
-                  {formik.values.has_boot && (
+                  {formik.values.with_boot && (
                     <div className="space-y-2 pl-6 animate-in slide-in-from-top-1 duration-200">
                       <label
                         htmlFor="boot_amount"
@@ -551,7 +555,7 @@ export default function TicketModal({
                         ₦
                         {(
                           Number(formik.values.amount) +
-                          (formik.values.has_boot
+                          (formik.values.with_boot
                             ? Number(formik.values.boot_amount || 0)
                             : 0)
                         ).toLocaleString()}

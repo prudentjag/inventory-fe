@@ -305,10 +305,9 @@ export interface FacilityTicket {
   status: TicketStatus;
   payment_method: PaymentMethod;
   notes?: string;
-  sale_id?: number;
   sale?: Sale;
   created_by?: User;
-  has_boot?: boolean;
+  with_boot?: boolean;
   boot_amount?: number | string;
   created_at?: string;
   updated_at?: string;
