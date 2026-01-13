@@ -1044,14 +1044,14 @@ export default function BookingsPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
-                  {selectedTicket.status === "paid" && canManage && (
+                  {/* {selectedTicket.status === "paid" && canManage && (
                     <button
                       onClick={() => handleRefundTicket(selectedTicket)}
                       className="px-4 py-2 text-sm font-medium bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                     >
                       Refund
                     </button>
-                  )}
+                  )} */}
                   <button
                     onClick={() => setSelectedTicket(null)}
                     className="px-4 py-2 text-sm font-medium border border-input rounded-lg hover:bg-accent transition-colors"

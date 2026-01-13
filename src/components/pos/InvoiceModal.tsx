@@ -197,12 +197,12 @@ export function InvoiceModal({
           >
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold uppercase tracking-wider">
-                Inventory Sys
+                Naveda World Bites and Brews
               </h2>
               <p className="text-xs text-gray-500">
-                123 Business Road, Lagos
+                GG9H+4Rs, Okwuta Road by Ahiaeke Junction, Umuahia, Abia State
                 <br />
-                Tel: +234 800 123 4567
+                Tel: +234 903 977 7679
               </p>
             </div>
 
