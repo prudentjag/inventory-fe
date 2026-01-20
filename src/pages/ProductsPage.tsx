@@ -6,6 +6,7 @@ import { ProductModal } from "../components/modals/ProductModal";
 import type { Product } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { DataTable, type Column } from "../components/ui/DataTable";
+import { cn } from "../lib/utils";
 
 export default function ProductsPage() {
   const { user } = useAuth();
@@ -99,7 +100,23 @@ export default function ProductsPage() {
       ),
     },
     {
-      header: "Item per Set (crate",
+      header: "Type",
+      accessorKey: "product_type",
+      cell: (product) => (
+        <span
+          className={cn(
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+            product.product_type === "individual"
+              ? "bg-purple-100 text-purple-800 border-purple-200"
+              : "bg-blue-100 text-blue-800 border-blue-200",
+          )}
+        >
+          {product.product_type === "individual" ? "Individual" : "Set"}
+        </span>
+      ),
+    },
+    {
+      header: "Item per Set (crate)",
       accessorKey: "items_per_set",
       className: "font-mono",
       cell: (product) => <span>{product.items_per_set ?? "-"}</span>,

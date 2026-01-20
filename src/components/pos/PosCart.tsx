@@ -16,7 +16,7 @@ interface PosCartProps {
   onRemoveFromCart: (id: string | number) => void;
   onCheckout: () => void;
   onSelectPaymentMethod: (
-    method: "cash" | "transfer" | "pos" | "monnify"
+    method: "cash" | "transfer" | "pos" | "monnify",
   ) => void;
 }
 
@@ -64,7 +64,10 @@ export function PosCart({
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-sm truncate">{item.name}</h4>
                 <p className="text-xs text-muted-foreground">
-                  @{(item.price ?? item.selling_price ?? 0).toLocaleString()}
+                  @{(item.price ?? item.selling_price ?? 0).toLocaleString()} /{" "}
+                  {item.product_type === "set"
+                    ? `Set of ${item.items_per_set || 1}`
+                    : "Single"}
                 </p>
               </div>
 

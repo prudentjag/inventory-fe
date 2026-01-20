@@ -87,15 +87,45 @@ export default function InventoryPage() {
       },
     },
     {
-      header: "Stock",
+      header: "Type",
+      cell: (item) => (
+        <span
+          className={cn(
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+            item.product?.product_type === "individual"
+              ? "bg-purple-100 text-purple-800 border-purple-200"
+              : "bg-blue-100 text-blue-800 border-blue-200",
+          )}
+        >
+          {item.product?.product_type === "individual" ? "Individual" : "Set"}
+        </span>
+      ),
+    },
+    {
+      header: "Stock (Inventory)",
       cell: (item) => (
         <div
           className={cn(
             "font-medium",
-            (item.quantity ?? 0) < 10 ? "text-red-500" : "text-foreground"
+            (item.quantity ?? 0) < 10 ? "text-red-500" : "text-foreground",
           )}
         >
-          {item.quantity ?? 0} {item.product?.unit_of_measurement ?? "unit"}s
+          {item.quantity ?? 0}{" "}
+          {item.product?.product_type === "set"
+            ? "Sets"
+            : item.product?.unit_of_measurement || "Units"}
+        </div>
+      ),
+    },
+    {
+      header: "Total Count",
+      cell: (item) => (
+        <div className="font-medium text-muted-foreground">
+          {item.total_items ??
+            (item.product?.product_type === "set"
+              ? (item.quantity ?? 0) * (item.product?.items_per_set || 1)
+              : (item.quantity ?? 0))}{" "}
+          {item.product?.unit_of_measurement || "Units"}
         </div>
       ),
     },
@@ -204,7 +234,7 @@ export default function InventoryPage() {
                   items.map((item) => {
                     const cat = item.product?.category;
                     return typeof cat === "object" ? cat?.name : cat;
-                  })
+                  }),
                 ).size
               }
             </h3>

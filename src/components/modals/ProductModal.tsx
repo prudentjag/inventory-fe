@@ -29,11 +29,19 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     size: Yup.string()
       .oneOf(["small", "medium", "big"], "Must be small, medium, or big")
       .nullable(),
-    items_per_set: Yup.number().min(1, "Must be at least 1").nullable(),
+    items_per_set: Yup.number().when("product_type", {
+      is: "set",
+      then: (schema) =>
+        schema.min(1, "Must be at least 1").required("Required"),
+      otherwise: (schema) => schema.nullable(),
+    }),
     price: Yup.number().positive("Must be positive").required("Required"),
     cost_price: Yup.number().positive("Must be positive").required("Required"),
     unit_of_measurement: Yup.string().required("Required"),
     quantity: Yup.number().min(1, "Must be at least 1").nullable(),
+    product_type: Yup.string()
+      .oneOf(["set", "individual"])
+      .required("Required"),
   });
 
   const formik = useFormik({
@@ -45,6 +53,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             (typeof product.brand === "object" ? product.brand?.id : ""),
           price: product.price ?? product.selling_price ?? 0,
           items_per_set: product.items_per_set ?? 12,
+          product_type: product.product_type || "set",
         }
       : {
           id: "",
@@ -54,6 +63,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           price: 0,
           size: "",
           items_per_set: 12,
+          product_type: "set",
           cost_price: 0,
           stock_quantity: 0,
           unit_of_measurement: "bottle",
@@ -74,6 +84,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         cost_price: Number(values.cost_price),
         unit_of_measurement: values.unit_of_measurement,
         trackable: true,
+        product_type: values.product_type as any,
       };
 
       if (product) {
@@ -86,10 +97,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             },
             onError: (error: any) => {
               toast.error(
-                error.response?.data?.message || "Failed to update product"
+                error.response?.data?.message || "Failed to update product",
               );
             },
-          }
+          },
         );
       } else {
         createProductMutation.mutate(
@@ -101,10 +112,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             },
             onError: (error: any) => {
               toast.error(
-                error.response?.data?.message || "Failed to create product"
+                error.response?.data?.message || "Failed to create product",
               );
             },
-          }
+          },
         );
       }
     },
@@ -218,29 +229,55 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="product_type" className="text-sm font-medium">
+                  Product Type
+                </label>
+                <select
+                  id="product_type"
+                  name="product_type"
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background"
+                  value={formik.values.product_type}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                >
+                  <option value="set">Set (Crates/Groups)</option>
+                  <option value="individual">
+                    Individual (Single Items/Kg)
+                  </option>
+                </select>
+                {formik.touched.product_type && formik.errors.product_type && (
+                  <p className="text-sm text-destructive">
+                    {formik.errors.product_type as string}
+                  </p>
+                )}
+              </div>
+
               <CustomFormInput
                 name="items_per_set"
                 label="Items per Set"
                 type="number"
                 formik={formik}
                 placeholder="e.g. 12"
+                disabled={formik.values.product_type === "individual"}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
                 name="cost_price"
                 label="Cost Price"
                 type="number"
                 formik={formik}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
                 name="price"
                 label="Selling Price"
                 type="number"
                 formik={formik}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="size" className="text-sm font-medium">
                   Size
@@ -266,9 +303,6 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   </p>
                 )}
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
                 name="unit_of_measurement"
                 label="Unit (e.g. Bottle, Pack)"

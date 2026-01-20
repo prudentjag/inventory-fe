@@ -58,7 +58,7 @@ export function PosProductGrid({
                 "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border",
                 selectedCategory === cat
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-input hover:border-primary/50 hover:text-foreground"
+                  : "bg-background text-muted-foreground border-input hover:border-primary/50 hover:text-foreground",
               )}
             >
               {cat}
@@ -126,6 +126,9 @@ export function PosProductGrid({
                 {typeof product.brand === "object"
                   ? product.brand?.name
                   : product.brand}
+              </span>
+              <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
+                {product.product_type === "individual" ? "Single" : "Set"}
               </span>
               <span className="font-bold text-primary text-sm">
                 ₦

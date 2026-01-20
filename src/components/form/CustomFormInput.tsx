@@ -8,6 +8,7 @@ interface CustomFormInputProps {
   formik: FormikProps<any>;
   type?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export const CustomFormInput = ({
@@ -16,6 +17,7 @@ export const CustomFormInput = ({
   formik,
   type = "text",
   placeholder,
+  disabled = false,
 }: CustomFormInputProps) => {
   return (
     <div className="grid w-full items-center gap-1.5">
@@ -29,6 +31,7 @@ export const CustomFormInput = ({
         value={formik.values[name] || ""}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
+        disabled={disabled}
       />
       {formik.touched[name] && formik.errors[name] && (
         <p className="text-red-500 text-sm">{String(formik.errors[name])}</p>

@@ -49,6 +49,8 @@ export interface CreateStaffPayload {
   is_active: boolean;
 }
 
+export type ProductType = "set" | "individual";
+
 export interface User {
   id: number;
   name: string;
@@ -81,6 +83,8 @@ export interface Product {
   unit_of_measurement?: string;
   image_url?: string;
   trackable?: boolean;
+  product_type?: ProductType;
+  total_items?: number;
 }
 
 export interface CartItem extends Product {
@@ -270,6 +274,7 @@ export interface InventoryItem {
   updated_at: string;
   brand?: Brand;
   category?: Category;
+  total_items?: number;
 }
 
 // Facility types
