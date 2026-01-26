@@ -1,7 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Loader2, Store } from "lucide-react";
-import type { Product, CartItem, Brand, InventoryItem } from "../types";
+import type {
+  Product,
+  CartItem,
+  Brand,
+  InventoryItem,
+  SuspendedOrder,
+} from "../types";
 import { useCategories } from "../data/categories";
 import { useInventory } from "../data/inventory";
 import { useBrands } from "../data/brands";
@@ -10,8 +16,11 @@ import { PosProductGrid } from "../components/pos/PosProductGrid";
 import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
 import { InvoiceModal } from "../components/pos/InvoiceModal";
+import { SuspendedOrdersPanel } from "../components/pos/SuspendedOrdersPanel";
 import { useCreateSale } from "../data/sales";
 import type { Sale, VirtualAccountDetails } from "../types";
+
+const SUSPENDED_ORDERS_KEY = "pos_suspended_orders";
 
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -33,13 +42,41 @@ export default function PosPage() {
     isPending?: boolean;
   } | null>(null);
 
+  // Suspended orders state
+  const [suspendedOrders, setSuspendedOrders] = useState<SuspendedOrder[]>([]);
+  const [isSuspendedPanelOpen, setIsSuspendedPanelOpen] = useState(false);
+
+  // Load suspended orders from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SUSPENDED_ORDERS_KEY);
+      if (saved) {
+        setSuspendedOrders(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error("Failed to load suspended orders:", error);
+    }
+  }, []);
+
+  // Save suspended orders to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        SUSPENDED_ORDERS_KEY,
+        JSON.stringify(suspendedOrders),
+      );
+    } catch (error) {
+      console.error("Failed to save suspended orders:", error);
+    }
+  }, [suspendedOrders]);
+
   const { user } = useAuth();
   const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
 
   // API Data
   const { data: categoriesData } = useCategories();
   const { data: inventoryData, isLoading } = useInventory(
-    effectiveUnitId || undefined
+    effectiveUnitId || undefined,
   );
   const { data: brandsData } = useBrands();
   const { mutate: createSale, isPending: isCreatingSale } = useCreateSale();
@@ -63,7 +100,7 @@ export default function PosPage() {
       const product = item.product;
       // Map category_id to category name
       const categoryObj = categoriesData?.find(
-        (c) => c.id === product.category_id
+        (c) => c.id === product.category_id,
       );
       return {
         ...product,
@@ -73,6 +110,7 @@ export default function PosPage() {
             ? product.category?.name
             : product.category),
         stock_quantity: item.quantity, // Use unit-specific stock
+        total_items: item.total_items, // Total available items
       };
     });
   }, [inventoryData, categoriesData]);
@@ -91,7 +129,7 @@ export default function PosPage() {
   const cartTotal = cart.reduce(
     (sum, item) =>
       sum + (item.price ?? item.selling_price ?? 0) * item.quantity,
-    0
+    0,
   );
 
   // Handlers
@@ -102,7 +140,7 @@ export default function PosPage() {
         return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       }
       return [...prev, { ...product, quantity: 1 }];
@@ -117,7 +155,7 @@ export default function PosPage() {
           return newQty > 0 ? { ...item, quantity: newQty } : item;
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -125,13 +163,81 @@ export default function PosPage() {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Suspend current order
+  const handleSuspendOrder = useCallback(() => {
+    if (cart.length === 0) return;
+
+    const newSuspendedOrder: SuspendedOrder = {
+      id: `susp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      items: [...cart],
+      total: cartTotal,
+      suspendedAt: new Date().toISOString(),
+      suspendedBy: user?.name,
+    };
+
+    setSuspendedOrders((prev) => [...prev, newSuspendedOrder]);
+    setCart([]);
+    toast.success("Order suspended. You can resume it later.");
+  }, [cart, cartTotal, user?.name]);
+
+  // Resume a suspended order
+  const handleResumeOrder = useCallback(
+    (orderId: string) => {
+      const order = suspendedOrders.find((o) => o.id === orderId);
+      if (!order) return;
+
+      // If there's currently items in cart, ask to suspend first
+      if (cart.length > 0) {
+        const confirmSwitch = window.confirm(
+          "You have items in your current cart. Do you want to suspend them and resume the selected order?",
+        );
+        if (confirmSwitch) {
+          // Suspend current cart first
+          const currentOrderToSuspend: SuspendedOrder = {
+            id: `susp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            items: [...cart],
+            total: cartTotal,
+            suspendedAt: new Date().toISOString(),
+            suspendedBy: user?.name,
+          };
+          setSuspendedOrders((prev) => [
+            ...prev.filter((o) => o.id !== orderId),
+            currentOrderToSuspend,
+          ]);
+        } else {
+          return;
+        }
+      } else {
+        // Just remove the order being resumed
+        setSuspendedOrders((prev) => prev.filter((o) => o.id !== orderId));
+      }
+
+      // Restore the order to cart
+      setCart(order.items);
+      setIsSuspendedPanelOpen(false);
+      toast.success("Order resumed. Continue checkout when ready.");
+    },
+    [cart, cartTotal, suspendedOrders, user?.name],
+  );
+
+  // Delete a suspended order
+  const handleDeleteSuspendedOrder = useCallback((orderId: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this suspended order? This cannot be undone.",
+    );
+    if (!confirmDelete) return;
+
+    setSuspendedOrders((prev) => prev.filter((o) => o.id !== orderId));
+    toast.success("Suspended order deleted.");
+  }, []);
+
   const handleCheckout = () => {
     if (cart.length === 0) return;
     setIsPaymentModalOpen(true);
   };
 
   const handleSelectPaymentMethod = (
-    method: "cash" | "transfer" | "pos" | "monnify"
+    method: "cash" | "transfer" | "pos" | "monnify",
   ) => {
     setPaymentMethod(method);
     setIsPaymentModalOpen(true);
@@ -176,11 +282,11 @@ export default function PosPage() {
           // Show appropriate message
           if (isMonnifyPending) {
             toast.info(
-              `Virtual account generated. Please transfer ₦${cartTotal.toLocaleString()} to complete.`
+              `Virtual account generated. Please transfer ₦${cartTotal.toLocaleString()} to complete.`,
             );
           } else {
             toast.success(
-              `Payment of ₦${cartTotal.toLocaleString()} successful!`
+              `Payment of ₦${cartTotal.toLocaleString()} successful!`,
             );
           }
 
@@ -192,14 +298,14 @@ export default function PosPage() {
           setCart([]);
         },
         onError: (
-          error: Error & { response?: { data?: { message?: string } } }
+          error: Error & { response?: { data?: { message?: string } } },
         ) => {
           toast.error(
             error.response?.data?.message ||
-              "Failed to process payment. Please try again."
+              "Failed to process payment. Please try again.",
           );
         },
-      }
+      },
     );
   };
 
@@ -252,6 +358,9 @@ export default function PosPage() {
         onRemoveFromCart={removeFromCart}
         onCheckout={handleCheckout}
         onSelectPaymentMethod={handleSelectPaymentMethod}
+        onSuspendOrder={handleSuspendOrder}
+        suspendedCount={suspendedOrders.length}
+        onViewSuspended={() => setIsSuspendedPanelOpen(true)}
       />
 
       <PaymentModal
@@ -279,6 +388,14 @@ export default function PosPage() {
           onClose={() => setIsInvoiceModalOpen(false)}
         />
       )}
+
+      <SuspendedOrdersPanel
+        isOpen={isSuspendedPanelOpen}
+        onClose={() => setIsSuspendedPanelOpen(false)}
+        suspendedOrders={suspendedOrders}
+        onResumeOrder={handleResumeOrder}
+        onDeleteOrder={handleDeleteSuspendedOrder}
+      />
     </div>
   );
 }

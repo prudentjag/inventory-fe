@@ -91,6 +91,15 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+export interface SuspendedOrder {
+  id: string;
+  items: CartItem[];
+  total: number;
+  customerNote?: string;
+  suspendedAt: string;
+  suspendedBy?: string;
+}
+
 export type PaymentMethod = "cash" | "pos" | "transfer" | "monnify";
 export type PaymentStatus = "paid" | "completed" | "pending";
 
@@ -338,4 +347,35 @@ export interface FacilityBooking {
   created_by?: User;
   created_at?: string;
   updated_at?: string;
+}
+
+// Daily Report types
+export interface DailyReportItem {
+  id: number;
+  daily_report_id: number;
+  product_id: number;
+  opening_stock: number;
+  stock_received: number;
+  quantity_sold: number;
+  damages: number;
+  closing_stock: number;
+  product?: Product;
+}
+
+export interface DailyReport {
+  id: number;
+  user_id: number;
+  unit_id: number;
+  report_date: string;
+  total_sales_amount: string;
+  total_items_sold: number;
+  total_stock_received: number;
+  total_damages: number;
+  remark: string | null;
+  status: "open" | "closed";
+  created_at: string;
+  updated_at: string;
+  items?: DailyReportItem[];
+  user?: User;
+  unit?: Unit;
 }

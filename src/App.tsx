@@ -19,6 +19,7 @@ import { AuditLogsPage } from "./pages/AuditLogsPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import BookingsPage from "./pages/BookingsPage";
 import { StockInsightsPage } from "./pages/StockInsightsPage";
+import DailyReportsPage from "./pages/DailyReportsPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="pos" element={<PosPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
               <Route path="invoices" element={<InvoicesPage />} />
+              <Route path="daily-reports" element={<DailyReportsPage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="products" element={<ProductsPage />} />
               <Route path="units" element={<UnitsPage />} />

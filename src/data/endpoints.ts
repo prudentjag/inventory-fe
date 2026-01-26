@@ -22,4 +22,5 @@ export const API_ENDPOINTS = {
   FACILITY_BOOKINGS: "/facility-bookings",
   FACILITY_TICKETS: "/facility-tickets",
   FACILITY_TICKETS_STATS: "/facility-tickets-stats",
+  DAILY_REPORTS: "/daily-reports",
 } as const;

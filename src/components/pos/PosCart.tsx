@@ -5,6 +5,7 @@ import {
   Minus,
   Banknote,
   CreditCard,
+  Pause,
 } from "lucide-react";
 import { useMemo } from "react";
 import type { CartItem } from "../../types";
@@ -18,6 +19,9 @@ interface PosCartProps {
   onSelectPaymentMethod: (
     method: "cash" | "transfer" | "pos" | "monnify",
   ) => void;
+  onSuspendOrder: () => void;
+  suspendedCount: number;
+  onViewSuspended: () => void;
 }
 
 export function PosCart({
@@ -27,6 +31,9 @@ export function PosCart({
   onRemoveFromCart,
   onCheckout,
   onSelectPaymentMethod,
+  onSuspendOrder,
+  suspendedCount,
+  onViewSuspended,
 }: PosCartProps) {
   // Generate stable order ID
   const orderId = useMemo(() => Math.floor(Math.random() * 10000), []);
@@ -37,10 +44,34 @@ export function PosCart({
         <div className="flex items-center gap-2">
           <ShoppingCart size={20} className="text-primary" />
           <h2 className="font-semibold">Current Order</h2>
+          <span className="text-xs font-mono bg-background px-2 py-1 rounded border border-border text-muted-foreground">
+            #ORD-{orderId}
+          </span>
         </div>
-        <span className="text-xs font-mono bg-background px-2 py-1 rounded border border-border text-muted-foreground">
-          #ORD-{orderId}
-        </span>
+        <div className="flex items-center gap-2">
+          {cart.length > 0 && (
+            <button
+              onClick={onSuspendOrder}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors text-sm font-medium"
+              title="Suspend this order"
+            >
+              <Pause size={14} />
+              Suspend
+            </button>
+          )}
+          <button
+            onClick={onViewSuspended}
+            className="relative p-2 rounded-lg border border-border hover:bg-secondary transition-colors"
+            title="View suspended orders"
+          >
+            <Pause size={16} className="text-muted-foreground" />
+            {suspendedCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {suspendedCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Cart Items */}
