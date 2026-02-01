@@ -233,6 +233,7 @@ export interface Stock {
   product_id: number;
   product?: Product;
   quantity: number;
+  formatted_quantity?: string;
   low_stock_threshold: number;
   batch_number?: string;
   created_at?: string;
@@ -277,6 +278,7 @@ export interface InventoryItem {
   unit_id: number;
   product_id: number;
   quantity: number;
+  formatted_quantity?: string;
   low_stock_threshold: number;
   product: Product;
   created_at: string;
@@ -355,10 +357,15 @@ export interface DailyReportItem {
   daily_report_id: number;
   product_id: number;
   opening_stock: number;
+  formatted_opening_stock?: string;
   stock_received: number;
+  formatted_stock_received?: string;
   quantity_sold: number;
+  formatted_quantity_sold?: string;
   damages: number;
+  formatted_damages?: string;
   closing_stock: number;
+  formatted_closing_stock?: string;
   product?: Product;
 }
 

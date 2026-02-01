@@ -339,13 +339,16 @@ export default function DailyReportsPage() {
                                 `Product #${item.product_id}`}
                             </td>
                             <td className="px-2 py-2 text-right">
-                              {item.opening_stock}
+                              {item.formatted_opening_stock ||
+                                item.opening_stock}
                             </td>
                             <td className="px-2 py-2 text-right">
-                              {item.closing_stock}
+                              {item.formatted_closing_stock ||
+                                item.closing_stock}
                             </td>
                             <td className="px-2 py-2 text-right">
-                              {item.quantity_sold}
+                              {item.formatted_quantity_sold ||
+                                item.quantity_sold}
                             </td>
                             <td
                               className={cn(
@@ -353,7 +356,7 @@ export default function DailyReportsPage() {
                                 item.damages > 0 && "text-red-600",
                               )}
                             >
-                              {item.damages}
+                              {item.formatted_damages || item.damages}
                             </td>
                           </tr>
                         ))}

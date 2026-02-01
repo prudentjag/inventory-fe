@@ -21,16 +21,28 @@ export function EditCentralStockModal({
   const updateStockMutation = useUpdateStock();
 
   const validationSchema = Yup.object({
-    quantity: Yup.number().min(0, "Must be at least 0").required("Required"),
+    sets: Yup.number().min(0, "Cannot be negative"),
+    items: Yup.number().min(0, "Cannot be negative"),
+    quantity: Yup.number().min(0, "Must be at least 0"),
     low_stock_threshold: Yup.number().min(0, "Cannot be negative"),
     batch_number: Yup.string().nullable(),
-  });
+    notes: Yup.string().nullable(),
+  }).test(
+    "at-least-one-val",
+    "Must provide quantity or sets/items",
+    (values) => {
+      return !!(values.quantity || values.sets || values.items);
+    },
+  );
 
   const formik = useFormik({
     initialValues: {
+      sets: 0,
+      items: 0,
       quantity: stock?.quantity || 0,
       low_stock_threshold: stock?.low_stock_threshold || 0,
       batch_number: stock?.batch_number || "",
+      notes: "",
     },
     enableReinitialize: true,
     validationSchema,
@@ -41,9 +53,12 @@ export function EditCentralStockModal({
         {
           id: stock.id,
           data: {
-            quantity: values.quantity,
+            sets: values.sets || undefined,
+            items: values.items || undefined,
+            quantity: values.quantity || undefined,
             low_stock_threshold: values.low_stock_threshold,
             batch_number: values.batch_number || undefined,
+            notes: values.notes || undefined,
           },
         },
         {
@@ -53,10 +68,10 @@ export function EditCentralStockModal({
           },
           onError: (error: any) => {
             toast.error(
-              error.response?.data?.message || "Failed to update stock"
+              error.response?.data?.message || "Failed to update stock",
             );
           },
-        }
+        },
       );
     },
   });
@@ -83,14 +98,35 @@ export function EditCentralStockModal({
           <form onSubmit={formik.handleSubmit} className="grid gap-6 py-4">
             <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
+                name="sets"
+                label="Sets"
+                type="number"
+                formik={formik}
+              />
+              <CustomFormInput
+                name="items"
+                label="Items"
+                type="number"
+                formik={formik}
+              />
+            </div>
+
+            {stock?.product?.items_per_set && (
+              <p className="text-xs text-muted-foreground -mt-4">
+                Tip: 1 set = {stock.product.items_per_set} items
+              </p>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <CustomFormInput
                 name="quantity"
-                label="Quantity"
+                label="Total Quantity (Sets)"
                 type="number"
                 formik={formik}
               />
               <CustomFormInput
                 name="low_stock_threshold"
-                label="Low Stock Alert"
+                label="Low Stock Alert (Sets)"
                 type="number"
                 formik={formik}
               />
@@ -102,6 +138,21 @@ export function EditCentralStockModal({
               formik={formik}
               placeholder="e.g. BATCH-2024-001"
             />
+
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                className="w-full min-h-[80px] px-3 py-2 rounded-lg bg-secondary/50 border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none text-sm"
+                placeholder="Add any extra information..."
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.notes}
+              />
+            </div>
 
             <div className="flex justify-end gap-3 mt-2">
               <button

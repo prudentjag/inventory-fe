@@ -34,16 +34,28 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
   const validationSchema = Yup.object({
     unit_id: Yup.string().required("Required"),
     product_id: Yup.string().required("Required"),
-    quantity: Yup.number().min(1, "Must be at least 1").required("Required"),
+    sets: Yup.number().min(0, "Cannot be negative"),
+    items: Yup.number().min(0, "Cannot be negative"),
+    quantity: Yup.number().min(0, "Cannot be negative"),
     low_stock_threshold: Yup.number().min(0, "Cannot be negative"),
-  });
+    notes: Yup.string(),
+  }).test(
+    "at-least-one-val",
+    "Must provide quantity or sets/items",
+    (values) => {
+      return !!(values.quantity || values.sets || values.items);
+    },
+  );
 
   const formik = useFormik({
     initialValues: {
       unit_id: "",
       product_id: "",
-      quantity: 1,
+      sets: 0,
+      items: 0,
+      quantity: 0,
       low_stock_threshold: 10,
+      notes: "",
     },
     validationSchema,
     onSubmit: (values) => {
@@ -51,8 +63,11 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
         {
           unit_id: Number(values.unit_id),
           product_id: values.product_id,
-          quantity: values.quantity,
-          low_stock_threshold: values.low_stock_threshold,
+          sets: values.sets || undefined,
+          items: values.items || undefined,
+          quantity: values.quantity || undefined,
+          low_stock_threshold: values.low_stock_threshold ?? 10,
+          notes: values.notes || undefined,
         },
         {
           onSuccess: () => {
@@ -62,10 +77,14 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
           onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to add stock");
           },
-        }
+        },
       );
     },
   });
+
+  const selectedProduct = products?.find(
+    (p) => String(p.id) === formik.values.product_id,
+  );
 
   const handleClose = () => {
     onClose();
@@ -105,16 +124,44 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
-                name="quantity"
-                label="Quantity to Add"
+                name="sets"
+                label="Sets"
                 type="number"
                 formik={formik}
               />
               <CustomFormInput
-                name="low_stock_threshold"
-                label="Low Stock Alert at"
+                name="items"
+                label="Items"
                 type="number"
                 formik={formik}
+              />
+            </div>
+
+            {selectedProduct?.items_per_set && (
+              <p className="text-xs text-muted-foreground -mt-4">
+                Tip: 1 set = {selectedProduct.items_per_set} items
+              </p>
+            )}
+
+            <CustomFormInput
+              name="low_stock_threshold"
+              label="Low Stock Alert at (Sets)"
+              type="number"
+              formik={formik}
+            />
+
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                className="w-full min-h-[80px] px-3 py-2 rounded-lg bg-secondary/50 border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none text-sm"
+                placeholder="Add any extra information..."
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.notes}
               />
             </div>
 

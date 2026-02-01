@@ -6,7 +6,9 @@ import type { ApiResponse, StockRequest, StockRequestStatus } from "../types";
 export interface CreateStockRequestPayload {
   unit_id: number;
   product_id: number;
-  quantity: number;
+  quantity?: number;
+  sets?: number;
+  items?: number;
   notes?: string;
 }
 
@@ -34,7 +36,7 @@ export const useStockRequest = (id: number) => {
     queryKey: ["stock-requests", id],
     queryFn: async () => {
       const response = await api.get<ApiResponse<StockRequest>>(
-        `${API_ENDPOINTS.STOCK_REQUESTS}/${id}`
+        `${API_ENDPOINTS.STOCK_REQUESTS}/${id}`,
       );
       return response.data.data;
     },
@@ -50,7 +52,7 @@ export const useCreateStockRequest = () => {
     mutationFn: async (data: CreateStockRequestPayload) => {
       const response = await api.post<ApiResponse<StockRequest>>(
         API_ENDPOINTS.STOCK_REQUESTS,
-        data
+        data,
       );
       return response.data;
     },
@@ -67,7 +69,7 @@ export const useApproveRequest = () => {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await api.post<ApiResponse<StockRequest>>(
-        `${API_ENDPOINTS.STOCK_REQUESTS}/${id}/approve`
+        `${API_ENDPOINTS.STOCK_REQUESTS}/${id}/approve`,
       );
       return response.data;
     },
@@ -93,7 +95,7 @@ export const useRejectRequest = () => {
     }) => {
       const response = await api.post<ApiResponse<StockRequest>>(
         `${API_ENDPOINTS.STOCK_REQUESTS}/${id}/reject`,
-        data
+        data,
       );
       return response.data;
     },

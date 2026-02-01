@@ -110,10 +110,12 @@ export default function InventoryPage() {
             (item.quantity ?? 0) < 10 ? "text-red-500" : "text-foreground",
           )}
         >
-          {item.quantity ?? 0}{" "}
-          {item.product?.product_type === "set"
-            ? "Sets"
-            : item.product?.unit_of_measurement || "Units"}
+          {item.formatted_quantity ||
+            `${item.quantity ?? 0} ${
+              item.product?.product_type === "set"
+                ? "Sets"
+                : item.product?.unit_of_measurement || "Units"
+            }`}
         </div>
       ),
     },

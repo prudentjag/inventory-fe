@@ -53,15 +53,25 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
       ? Yup.string()
       : Yup.string().required("Required"),
     product_id: Yup.string().required("Required"),
-    quantity: Yup.number().min(1, "Must be at least 1").required("Required"),
+    sets: Yup.number().min(0, "Cannot be negative"),
+    items: Yup.number().min(0, "Cannot be negative"),
+    quantity: Yup.number().min(1, "Must be at least 1"),
     notes: Yup.string(),
-  });
+  }).test(
+    "at-least-one-val",
+    "Must provide quantity or sets/items",
+    (values) => {
+      return !!(values.quantity || values.sets || values.items);
+    },
+  );
 
   const formik = useFormik({
     initialValues: {
       unit_id: defaultUnitId,
       product_id: "",
-      quantity: 1,
+      sets: 0,
+      items: 0,
+      quantity: 0,
       notes: "",
     },
     enableReinitialize: true,
@@ -75,9 +85,11 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
 
       createRequestMutation.mutate(
         {
-          unit_id: unitId,
+          unit_id: Number(unitId),
           product_id: Number(values.product_id),
-          quantity: values.quantity,
+          sets: values.sets || undefined,
+          items: values.items || undefined,
+          quantity: values.quantity || undefined,
           notes: values.notes || undefined,
         },
         {
@@ -87,13 +99,17 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
           },
           onError: (error: any) => {
             toast.error(
-              error.response?.data?.message || "Failed to submit request"
+              error.response?.data?.message || "Failed to submit request",
             );
           },
-        }
+        },
       );
     },
   });
+
+  const selectedProduct = products?.find(
+    (p) => String(p.id) === formik.values.product_id,
+  );
 
   const handleClose = () => {
     onClose();
@@ -133,12 +149,26 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
               placeholder="Search product..."
             />
 
-            <CustomFormInput
-              name="quantity"
-              label="Quantity Needed"
-              type="number"
-              formik={formik}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <CustomFormInput
+                name="sets"
+                label="Sets"
+                type="number"
+                formik={formik}
+              />
+              <CustomFormInput
+                name="items"
+                label="Items"
+                type="number"
+                formik={formik}
+              />
+            </div>
+
+            {selectedProduct?.items_per_set && (
+              <p className="text-xs text-muted-foreground -mt-4">
+                Tip: 1 set = {selectedProduct.items_per_set} items
+              </p>
+            )}
 
             <div className="space-y-2">
               <label htmlFor="notes" className="text-sm font-medium">

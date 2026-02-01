@@ -5,15 +5,21 @@ import type { ApiResponse, Stock } from "../types";
 
 export interface AddStockPayload {
   product_id: number;
-  quantity: number;
+  quantity?: number;
+  sets?: number;
+  items?: number;
   low_stock_threshold?: number;
   batch_number?: string;
+  notes?: string;
 }
 
 export interface UpdateStockPayload {
   quantity?: number;
+  sets?: number;
+  items?: number;
   low_stock_threshold?: number;
   batch_number?: string;
+  notes?: string;
 }
 
 // Fetch all central stock
@@ -35,7 +41,7 @@ export const useAddStock = () => {
     mutationFn: async (data: AddStockPayload) => {
       const response = await api.post<ApiResponse<Stock>>(
         API_ENDPOINTS.STOCK,
-        data
+        data,
       );
       return response.data;
     },
@@ -59,7 +65,7 @@ export const useUpdateStock = () => {
     }) => {
       const response = await api.put<ApiResponse<Stock>>(
         `${API_ENDPOINTS.STOCK}/${id}`,
-        data
+        data,
       );
       return response.data;
     },
@@ -76,7 +82,7 @@ export const useDeleteStock = () => {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await api.delete<ApiResponse<null>>(
-        `${API_ENDPOINTS.STOCK}/${id}`
+        `${API_ENDPOINTS.STOCK}/${id}`,
       );
       return response.data;
     },

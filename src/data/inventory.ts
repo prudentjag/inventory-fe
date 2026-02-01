@@ -6,14 +6,17 @@ import type { ApiResponse, InventoryItem } from "../types";
 export interface AddInventoryPayload {
   unit_id: string | number;
   product_id: string | number;
-  quantity: number;
+  quantity?: number;
+  sets?: number;
+  items?: number;
   low_stock_threshold?: number;
+  notes?: string;
 }
 
 export const addInventory = async (data: AddInventoryPayload) => {
   const response = await api.post<ApiResponse<InventoryItem>>(
     API_ENDPOINTS.INVENTORY,
-    data
+    data,
   );
   return response.data;
 };
@@ -24,7 +27,7 @@ export const useInventory = (unitId?: string | number) => {
     queryFn: async () => {
       if (!unitId) return null;
       const response = await api.get<ApiResponse<InventoryItem[]>>(
-        `${API_ENDPOINTS.INVENTORY}?unit_id=${unitId}`
+        `${API_ENDPOINTS.INVENTORY}?unit_id=${unitId}`,
       );
       return response.data;
     },

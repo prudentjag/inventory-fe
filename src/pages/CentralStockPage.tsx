@@ -71,13 +71,14 @@ export function CentralStockPage() {
       ),
     },
     {
-      header: "In Stock (Sets)",
+      header: "In Stock",
       cell: (item) => (
         <div className="text-right">
           <span className="font-mono text-lg font-bold text-primary">
-            {item.quantity.toLocaleString()}
+            {item.formatted_quantity ||
+              `${item.quantity.toLocaleString()} Sets`}
           </span>
-          {item.product?.items_per_set && (
+          {!item.formatted_quantity && item.product?.items_per_set && (
             <p className="text-xs text-muted-foreground">
               ={" "}
               {(

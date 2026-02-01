@@ -28,26 +28,41 @@ export function AddCentralStockModal({
 
   const validationSchema = Yup.object({
     product_id: Yup.string().required("Required"),
-    quantity: Yup.number().min(1, "Must be at least 1").required("Required"),
+    sets: Yup.number().min(0, "Cannot be negative"),
+    items: Yup.number().min(0, "Cannot be negative"),
+    quantity: Yup.number().min(0, "Cannot be negative"),
     low_stock_threshold: Yup.number().min(0, "Cannot be negative"),
     batch_number: Yup.string(),
-  });
+    notes: Yup.string(),
+  }).test(
+    "at-least-one-val",
+    "Must provide quantity or sets/items",
+    (values) => {
+      return !!(values.quantity || values.sets || values.items);
+    },
+  );
 
   const formik = useFormik({
     initialValues: {
       product_id: "",
-      quantity: 1,
+      sets: 0,
+      items: 0,
+      quantity: 0,
       low_stock_threshold: 10,
       batch_number: "",
+      notes: "",
     },
     validationSchema,
     onSubmit: (values) => {
       addStockMutation.mutate(
         {
           product_id: Number(values.product_id),
-          quantity: values.quantity,
-          low_stock_threshold: values.low_stock_threshold,
+          sets: values.sets || undefined,
+          items: values.items || undefined,
+          quantity: values.quantity || undefined,
+          low_stock_threshold: values.low_stock_threshold ?? 10,
           batch_number: values.batch_number || undefined,
+          notes: values.notes || undefined,
         },
         {
           onSuccess: () => {
@@ -57,10 +72,14 @@ export function AddCentralStockModal({
           onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to add stock");
           },
-        }
+        },
       );
     },
   });
+
+  const selectedProduct = products?.find(
+    (p) => String(p.id) === formik.values.product_id,
+  );
 
   const handleClose = () => {
     onClose();
@@ -92,18 +111,31 @@ export function AddCentralStockModal({
 
             <div className="grid grid-cols-2 gap-4">
               <CustomFormInput
-                name="quantity"
-                label="Quantity"
+                name="sets"
+                label="Sets"
                 type="number"
                 formik={formik}
               />
               <CustomFormInput
-                name="low_stock_threshold"
-                label="Low Stock Alert"
+                name="items"
+                label="Items"
                 type="number"
                 formik={formik}
               />
             </div>
+
+            {selectedProduct?.items_per_set && (
+              <p className="text-xs text-muted-foreground -mt-4">
+                Tip: 1 set = {selectedProduct.items_per_set} items
+              </p>
+            )}
+
+            <CustomFormInput
+              name="low_stock_threshold"
+              label="Low Stock Alert (Sets)"
+              type="number"
+              formik={formik}
+            />
 
             <CustomFormInput
               name="batch_number"
@@ -111,6 +143,21 @@ export function AddCentralStockModal({
               formik={formik}
               placeholder="e.g. BATCH-2024-001"
             />
+
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                className="w-full min-h-[80px] px-3 py-2 rounded-lg bg-secondary/50 border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none text-sm"
+                placeholder="Add any extra information..."
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.notes}
+              />
+            </div>
 
             <div className="flex justify-end gap-3 mt-2">
               <button
