@@ -33,12 +33,6 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
       value: String(u.id),
     })) || [];
 
-  const staffunitOptions =
-    user?.units?.map((u) => ({
-      label: u.name,
-      value: String(u.id),
-    })) || [];
-
   // Derive effective unit ID from user data
   const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
 
@@ -55,7 +49,7 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
     product_id: Yup.string().required("Required"),
     sets: Yup.number().min(0, "Cannot be negative"),
     items: Yup.number().min(0, "Cannot be negative"),
-    quantity: Yup.number().min(1, "Must be at least 1"),
+    quantity: Yup.number().min(0, "Cannot be negative"),
     notes: Yup.string(),
   }).test(
     "at-least-one-val",
@@ -81,7 +75,12 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
       const unitId =
         isUnitSelectorHidden && effectiveUnitId
           ? effectiveUnitId
-          : Number(values.unit_id);
+          : values.unit_id;
+
+      if (!unitId) {
+        toast.error("Please select a unit");
+        return;
+      }
 
       createRequestMutation.mutate(
         {
@@ -133,13 +132,15 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
           <form onSubmit={formik.handleSubmit} className="grid gap-6 py-4">
             {/* Only show unit selector for managers/admins or users without assigned unit */}
 
-            <CustomFormSelect
-              name="unit_id"
-              label="Requesting Unit"
-              formik={formik}
-              options={isUnitSelectorHidden ? staffunitOptions : unitOptions}
-              placeholder="Select unit..."
-            />
+            {!isUnitSelectorHidden && (
+              <CustomFormSelect
+                name="unit_id"
+                label="Requesting Unit"
+                formik={formik}
+                options={unitOptions}
+                placeholder="Select unit..."
+              />
+            )}
 
             <CustomFormSelect
               name="product_id"
