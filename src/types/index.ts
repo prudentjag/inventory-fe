@@ -373,7 +373,7 @@ export interface DailyReport {
   id: number;
   user_id: number;
   unit_id: number;
-  report_date: string;
+  date: string;
   total_sales_amount: string;
   total_items_sold: number;
   total_stock_received: number;

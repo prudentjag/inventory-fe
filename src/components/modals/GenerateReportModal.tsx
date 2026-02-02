@@ -63,7 +63,7 @@ export function GenerateReportModal({
     generateReport(
       {
         unit_id: unitId,
-        report_date: reportDate || undefined,
+        date: reportDate || undefined,
         damages:
           Object.keys(damagesPayload).length > 0 ? damagesPayload : undefined,
         remark: remark.trim() || undefined,

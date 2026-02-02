@@ -170,7 +170,7 @@ export default function DailyReportsPage() {
                             />
                             <span className="font-medium">
                               {format(
-                                new Date(report.report_date),
+                                new Date(report.date),
                                 "MMM dd, yyyy",
                               )}
                             </span>

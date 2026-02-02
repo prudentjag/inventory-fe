@@ -58,7 +58,7 @@ export const useDailyReport = (
 // Generate daily report payload
 export interface GenerateDailyReportPayload {
   unit_id: number;
-  report_date?: string;
+  date?: string;
   damages?: Record<number, number>; // { product_id: damage_count }
   remark?: string;
 }
@@ -124,7 +124,7 @@ export const useTodayReport = (
       >(`${API_ENDPOINTS.DAILY_REPORTS}?unit_id=${unitId}`);
       // Check if any report is from today
       const reports = response.data.data?.data || [];
-      return reports.find((r) => r.report_date === today) || null;
+      return reports.find((r) => r.date === today) || null;
     },
     enabled: !!unitId && (options?.enabled ?? true),
   });
