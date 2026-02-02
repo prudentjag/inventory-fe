@@ -375,9 +375,7 @@ export default function DailyReportsPage() {
                                 item.opening_stock}
                             </td>
                             <td className="px-2 py-2 text-right font-medium text-blue-600 dark:text-blue-400">
-                              {item.closing_stock +
-                                item.quantity_sold -
-                                item.opening_stock}
+                              {(item.closing_stock + item.quantity_sold) - item.opening_stock}
                             </td>
                             <td className="px-2 py-2 text-right">
                               {item.formatted_closing_stock ||
