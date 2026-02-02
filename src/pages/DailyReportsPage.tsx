@@ -357,6 +357,7 @@ export default function DailyReportsPage() {
                         <tr>
                           <th className="px-2 py-2 text-left">Product</th>
                           <th className="px-2 py-2 text-left">Opening Stock</th>
+                          <th className="px-2 py-2 text-left">Added Stock</th>
                           <th className="px-2 py-2 text-left">Closing Stock</th>
                           <th className="px-2 py-2 text-right">Sold</th>
                           <th className="px-2 py-2 text-right">Damage</th>
@@ -371,6 +372,11 @@ export default function DailyReportsPage() {
                             </td>
                             <td className="px-2 py-2 text-right">
                               {item.formatted_opening_stock ||
+                                item.opening_stock}
+                            </td>
+                            <td className="px-2 py-2 text-right font-medium text-blue-600 dark:text-blue-400">
+                              {item.closing_stock +
+                                item.quantity_sold -
                                 item.opening_stock}
                             </td>
                             <td className="px-2 py-2 text-right">
