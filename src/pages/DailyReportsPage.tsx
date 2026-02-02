@@ -10,6 +10,7 @@ import {
   Save,
   X,
   Filter,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import {
   useDailyReports,
   useDailyReport,
   useUpdateDailyReportRemark,
+  useDeleteDailyReport,
 } from "../data/dailyReports";
 import { useInventory } from "../data/inventory";
 import { useUnits } from "../data/units";
@@ -52,6 +54,8 @@ export default function DailyReportsPage() {
   const { data: inventoryData } = useInventory(selectedUnitId || undefined);
   const { mutate: updateRemark, isPending: isUpdatingRemark } =
     useUpdateDailyReportRemark();
+  const { mutate: deleteReport, isPending: isDeleting } =
+    useDeleteDailyReport();
 
   const reports = reportsData?.data?.data || [];
   const pagination = reportsData?.data;
@@ -85,6 +89,26 @@ export default function DailyReportsPage() {
         },
       },
     );
+  };
+
+  const handleDeleteReport = () => {
+    if (!selectedReportId) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this report? This action cannot be undone and you will need to regenerate it.",
+      )
+    )
+      return;
+
+    deleteReport(selectedReportId, {
+      onSuccess: () => {
+        toast.success("Report deleted successfully");
+        setSelectedReportId(null);
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || "Failed to delete report");
+      },
+    });
   };
 
   if (!selectedUnitId && !["admin", "stockist"].includes(user?.role || "")) {
@@ -375,9 +399,8 @@ export default function DailyReportsPage() {
                                 item.opening_stock}
                             </td>
                             <td className="px-2 py-2 text-right font-medium text-blue-600 dark:text-blue-400">
-                              {Number(item.closing_stock) +
-                                Number(item.quantity_sold) -
-                                Number(item.opening_stock)}
+                              {item.formatted_stock_received ||
+                                item.stock_received}
                             </td>
                             <td className="px-2 py-2 text-right">
                               {item.formatted_closing_stock ||
@@ -465,6 +488,26 @@ export default function DailyReportsPage() {
                 </p>
                 {selectedReport.user && <p>By: {selectedReport.user.name}</p>}
               </div>
+
+              {/* Delete Action */}
+              {(user?.role === "admin" ||
+                user?.role === "stockist" ||
+                user?.id === selectedReport.user_id) && (
+                <div className="pt-4 flex justify-end">
+                  <button
+                    onClick={handleDeleteReport}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                    Delete & Regenerate
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -109,6 +109,24 @@ export const useUpdateDailyReportRemark = () => {
   });
 };
 
+// Delete daily report mutation
+export const useDeleteDailyReport = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await api.delete<ApiResponse<null>>(
+        `${API_ENDPOINTS.DAILY_REPORTS}/${id}`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+};
+
 // Check if report exists for today
 export const useTodayReport = (
   unitId: number | undefined,
