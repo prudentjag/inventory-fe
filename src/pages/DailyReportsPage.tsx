@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   Save,
   X,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -19,15 +20,23 @@ import {
   useUpdateDailyReportRemark,
 } from "../data/dailyReports";
 import { useInventory } from "../data/inventory";
+import { useUnits } from "../data/units";
 import { GenerateReportModal } from "../components/modals/GenerateReportModal";
-import type { DailyReport, InventoryItem } from "../types";
+import type { DailyReport, InventoryItem, Unit } from "../types";
 import { cn } from "../lib/utils";
 
 export default function DailyReportsPage() {
   const { user } = useAuth();
-  const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
-
   const [page, setPage] = useState(1);
+  const [selectedUnitId, setSelectedUnitId] = useState<
+    number | string | undefined
+  >(user?.assigned_unit_id || user?.units?.[0]?.id || undefined);
+
+  // Fetch all units for filtering (if admin/stockist)
+  const { data: units } = useUnits(
+    ["admin", "stockist"].includes(user?.role || ""),
+  );
+
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [editingRemark, setEditingRemark] = useState(false);
@@ -35,12 +44,12 @@ export default function DailyReportsPage() {
 
   // Queries
   const { data: reportsData, isLoading: isLoadingReports } = useDailyReports(
-    { unit_id: effectiveUnitId, page },
-    { enabled: !!effectiveUnitId },
+    { unit_id: selectedUnitId, page },
+    { enabled: !!selectedUnitId },
   );
   const { data: selectedReportData, isLoading: isLoadingDetail } =
     useDailyReport(selectedReportId, { enabled: !!selectedReportId });
-  const { data: inventoryData } = useInventory(effectiveUnitId || undefined);
+  const { data: inventoryData } = useInventory(selectedUnitId || undefined);
   const { mutate: updateRemark, isPending: isUpdatingRemark } =
     useUpdateDailyReportRemark();
 
@@ -78,7 +87,7 @@ export default function DailyReportsPage() {
     );
   };
 
-  if (!effectiveUnitId) {
+  if (!selectedUnitId && !["admin", "stockist"].includes(user?.role || "")) {
     return (
       <div className="h-[calc(100vh-8rem)] flex items-center justify-center p-6">
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8 max-w-md text-center space-y-4">
@@ -108,14 +117,45 @@ export default function DailyReportsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsGenerateModalOpen(true)}
-          className="px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
-        >
-          <ClipboardCheck size={18} />
-          Generate Report
-        </button>
+        {selectedUnitId && (
+          <button
+            onClick={() => setIsGenerateModalOpen(true)}
+            className="px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+          >
+            <ClipboardCheck size={18} />
+            Generate Report
+          </button>
+        )}
       </div>
+
+      {/* Unit Filter - Only for Admins and Stockists */}
+      {["admin", "stockist"].includes(user?.role || "") && (
+        <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
+            <Filter size={18} />
+            <span className="text-sm font-medium">Filter by Unit:</span>
+          </div>
+          <div className="w-full max-w-sm">
+            <select
+              value={selectedUnitId || ""}
+              onChange={(e) => setSelectedUnitId(Number(e.target.value) || "")}
+              className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer hover:border-primary/50"
+            >
+              <option value="">Choose a unit...</option>
+              {units?.map((unit: Unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name} ({unit.type})
+                </option>
+              ))}
+            </select>
+          </div>
+          {!selectedUnitId && (
+            <p className="text-xs text-amber-600 font-medium">
+              Please select a unit to view its daily reports.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Reports List */}
@@ -428,7 +468,7 @@ export default function DailyReportsPage() {
       <GenerateReportModal
         isOpen={isGenerateModalOpen}
         onClose={() => setIsGenerateModalOpen(false)}
-        unitId={effectiveUnitId}
+        unitId={Number(selectedUnitId)}
         products={products}
       />
     </div>
