@@ -26,6 +26,7 @@ export function GenerateReportModal({
 }: GenerateReportModalProps) {
   const [damages, setDamages] = useState<DamageEntry[]>([]);
   const [remark, setRemark] = useState("");
+  const [reportDate, setReportDate] = useState("");
   const { mutate: generateReport, isPending } = useGenerateDailyReport();
 
   if (!isOpen) return null;
@@ -62,6 +63,7 @@ export function GenerateReportModal({
     generateReport(
       {
         unit_id: unitId,
+        report_date: reportDate || undefined,
         damages:
           Object.keys(damagesPayload).length > 0 ? damagesPayload : undefined,
         remark: remark.trim() || undefined,
@@ -120,6 +122,23 @@ export function GenerateReportModal({
 
           {/* Content */}
           <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {/* Date Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Report Date (Optional)
+              </label>
+              <input
+                type="date"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-background border border-input text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to generate report for today. Useful for catching up
+                on missed daily reports.
+              </p>
+            </div>
+
             {/* Damages Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -219,8 +238,8 @@ export function GenerateReportModal({
               />
               <p className="text-xs text-blue-700 dark:text-blue-300">
                 Once generated, the report will summarize all sales, stock
-                movements, and damages for today. You can only generate one
-                report per day per unit.
+                movements, and damages for the selected date (defaults to
+                today). You can only generate one report per day per unit.
               </p>
             </div>
           </div>

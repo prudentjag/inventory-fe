@@ -58,6 +58,7 @@ export const useDailyReport = (
 // Generate daily report payload
 export interface GenerateDailyReportPayload {
   unit_id: number;
+  report_date?: string;
   damages?: Record<number, number>; // { product_id: damage_count }
   remark?: string;
 }

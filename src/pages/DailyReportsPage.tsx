@@ -16,7 +16,6 @@ import { useAuth } from "../context/AuthContext";
 import {
   useDailyReports,
   useDailyReport,
-  useTodayReport,
   useUpdateDailyReportRemark,
 } from "../data/dailyReports";
 import { useInventory } from "../data/inventory";
@@ -39,8 +38,6 @@ export default function DailyReportsPage() {
     { unit_id: effectiveUnitId, page },
     { enabled: !!effectiveUnitId },
   );
-  const { data: todayReport, refetch: refetchToday } =
-    useTodayReport(effectiveUnitId);
   const { data: selectedReportData, isLoading: isLoadingDetail } =
     useDailyReport(selectedReportId, { enabled: !!selectedReportId });
   const { data: inventoryData } = useInventory(effectiveUnitId || undefined);
@@ -107,22 +104,16 @@ export default function DailyReportsPage() {
             Daily Reports
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            End-of-day summaries for your unit
+            End-of-day summaries and regional reports
           </p>
         </div>
 
         <button
           onClick={() => setIsGenerateModalOpen(true)}
-          disabled={!!todayReport}
-          className={cn(
-            "px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2",
-            todayReport
-              ? "bg-secondary text-muted-foreground cursor-not-allowed"
-              : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg",
-          )}
+          className="px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
         >
           <ClipboardCheck size={18} />
-          {todayReport ? "Report Generated Today" : "Close Day"}
+          Generate Report
         </button>
       </div>
 
@@ -439,7 +430,6 @@ export default function DailyReportsPage() {
         onClose={() => setIsGenerateModalOpen(false)}
         unitId={effectiveUnitId}
         products={products}
-        onSuccess={() => refetchToday()}
       />
     </div>
   );
