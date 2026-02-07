@@ -233,6 +233,7 @@ export interface Stock {
   product_id: number;
   product?: Product;
   quantity: number;
+  total_items?: number;
   formatted_quantity?: string;
   low_stock_threshold: number;
   batch_number?: string;

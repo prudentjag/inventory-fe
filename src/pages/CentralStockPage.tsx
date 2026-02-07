@@ -93,6 +93,16 @@ export function CentralStockPage() {
       headerClassName: "text-right",
     },
     {
+      header: "Total Quantity",
+      cell: (item) => (
+        <span className="font-mono text-muted-foreground">
+          {item.total_items}
+        </span>
+      ),
+      className: "text-right",
+      headerClassName: "text-right",
+    },
+    {
       header: "Low Stock Alert (Sets)",
       cell: (item) => (
         <span className="font-mono text-muted-foreground">
@@ -113,7 +123,7 @@ export function CentralStockPage() {
     {
       header: "Status",
       cell: (item) => {
-        const isLowStock = item.quantity <= item.low_stock_threshold;
+        const isLowStock = Number(item.quantity) <= Number(item.low_stock_threshold);
         return isLowStock ? (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
             <AlertTriangle className="h-3 w-3" />
@@ -176,7 +186,7 @@ export function CentralStockPage() {
     return sum + item.quantity * itemsPerSet;
   }, 0);
   const lowStockCount =
-    stock?.filter((item) => item.quantity <= item.low_stock_threshold).length ||
+    stock?.filter((item) => Number(item.quantity) <= Number(item.low_stock_threshold)).length ||
     0;
 
   return (
