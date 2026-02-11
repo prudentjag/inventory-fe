@@ -56,7 +56,7 @@ export interface CreateStaffPayload {
 }
 
 export type ProductType = "set" | "individual";
-export type SourceType = "central_stock" | "unit_produced";
+export type SourceType = "central_stock" | "unit_produced" | "unit_processed";
 
 export interface User {
   id: number;

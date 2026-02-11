@@ -117,7 +117,8 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           {
             onSuccess: () => {
               const message =
-                values.source_type === "unit_produced"
+                values.source_type === "unit_produced" ||
+                values.source_type === "unit_processed"
                   ? "Unit-produced product created successfully"
                   : "Product created and added to central stock";
               toast.success(message);
@@ -259,14 +260,17 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                 >
                   <option value="central_stock">📦 Central Stock</option>
                   <option value="unit_produced">🏭 Unit Produced</option>
+                  <option value="unit_processed">⚙️ Unit Processed</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  {formik.values.source_type === "unit_produced"
+                  {formik.values.source_type === "unit_produced" ||
+                  formik.values.source_type === "unit_processed"
                     ? "Made/sourced at the unit (e.g., shawarma, popcorn)"
                     : "Stored in central warehouse"}
                 </p>
               </div>
-              {formik.values.source_type === "unit_produced" && (
+              {(formik.values.source_type === "unit_produced" ||
+                formik.values.source_type === "unit_processed") && (
                 <div className="flex items-center">
                   <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-300">

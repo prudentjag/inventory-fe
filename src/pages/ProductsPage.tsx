@@ -17,7 +17,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<
-    "all" | "central_stock" | "unit_produced"
+    "all" | "central_stock" | "unit_produced" | "unit_processed"
   >("all");
 
   const canEdit = user?.role === "admin" || user?.role === "stockist"; // Only admin should edit global catalog
@@ -139,9 +139,13 @@ export default function ProductsPage() {
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400">
             📦 Central Stock
           </span>
-        ) : (
+        ) : sourceType === "unit_produced" ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-400">
             🏭 Unit Produced
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
+            ⚙️ Unit Processed
           </span>
         );
       },
@@ -254,6 +258,7 @@ export default function ProductsPage() {
                 <option value="all">All Sources</option>
                 <option value="central_stock">📦 Central Stock</option>
                 <option value="unit_produced">🏭 Unit Produced</option>
+                <option value="unit_processed">⚙️ Unit Processed</option>
               </select>
             </div>
           </div>

@@ -82,10 +82,13 @@ export const useDeleteProduct = () => {
   });
 };
 
-// Hook for fetching only unit-produced products (for UnitPOS)
+// Hook for fetching only unit-produced or unit-processed products (for UnitPOS)
 export const useUnitProducedProducts = () => {
   const { data: products, ...rest } = useProducts();
   const unitProducedProducts =
-    products?.filter((p) => p.source_type === "unit_produced") || [];
+    products?.filter(
+      (p) =>
+        p.source_type === "unit_produced" || p.source_type === "unit_processed",
+    ) || [];
   return { data: unitProducedProducts, ...rest };
 };

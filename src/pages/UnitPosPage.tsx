@@ -618,7 +618,9 @@ export default function UnitPosPage() {
               {/* Unit Produced Badge - No stock tracking */}
               <div className="mt-1">
                 <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  🏭 Unit Produced
+                  {product.source_type === "unit_processed"
+                    ? "⚙️ Unit Processed"
+                    : "🏭 Unit Produced"}
                 </span>
               </div>
               <div className="flex items-center justify-between mt-1">
@@ -643,7 +645,8 @@ export default function UnitPosPage() {
               <Factory size={32} className="mb-2 opacity-50" />
               <p>No unit products found</p>
               <p className="text-xs mt-1">
-                Add products with "Unit Produced" source type
+                Add products with "Unit Produced" or "Unit Processed" source
+                type
               </p>
             </div>
           )}
