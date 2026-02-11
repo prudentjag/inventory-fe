@@ -22,10 +22,12 @@ export function RequestStockModal({ isOpen, onClose }: RequestStockModalProps) {
   const createRequestMutation = useCreateStockRequest();
 
   const productOptions =
-    products?.map((p) => ({
-      label: `${p.name} (${p.sku})`,
-      value: String(p.id),
-    })) || [];
+    products
+      ?.filter((p) => (p.source_type || "central_stock") === "central_stock")
+      ?.map((p) => ({
+        label: `${p.name} (${p.sku})`,
+        value: String(p.id),
+      })) || [];
 
   const unitOptions =
     units?.map((u) => ({

@@ -20,6 +20,8 @@ import FacilitiesPage from "./pages/FacilitiesPage";
 import BookingsPage from "./pages/BookingsPage";
 import { StockInsightsPage } from "./pages/StockInsightsPage";
 import DailyReportsPage from "./pages/DailyReportsPage";
+import UnitPosPage from "./pages/UnitPosPage";
+import MenuPage from "./pages/MenuPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/menu" element={<MenuPage />} />
             <Route path="/login" element={<LoginPage />} />
 
             <Route
@@ -59,6 +62,7 @@ export default function App() {
             >
               <Route index element={<DashboardOverview />} />
               <Route path="pos" element={<PosPage />} />
+              <Route path="unit-pos" element={<UnitPosPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
               <Route path="invoices" element={<InvoicesPage />} />
               <Route path="daily-reports" element={<DailyReportsPage />} />

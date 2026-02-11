@@ -16,6 +16,9 @@ export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<
+    "all" | "central_stock" | "unit_produced"
+  >("all");
 
   const canEdit = user?.role === "admin" || user?.role === "stockist"; // Only admin should edit global catalog
 
@@ -42,7 +45,13 @@ export default function ProductsPage() {
     // Handle brand as either string or object
     const brandName = typeof p.brand === "object" ? p.brand?.name : p.brand;
     const brandMatch = brandName?.toLowerCase().includes(query) ?? false;
-    return nameMatch || skuMatch || brandMatch;
+    const searchMatch = nameMatch || skuMatch || brandMatch;
+
+    // Source type filter
+    const sourceType = p.source_type || "central_stock";
+    const sourceMatch = sourceFilter === "all" || sourceType === sourceFilter;
+
+    return searchMatch && sourceMatch;
   });
 
   const columns: Column<Product>[] = [
@@ -120,6 +129,22 @@ export default function ProductsPage() {
       accessorKey: "items_per_set",
       className: "font-mono",
       cell: (product) => <span>{product.items_per_set ?? "-"}</span>,
+    },
+    {
+      header: "Source",
+      accessorKey: "source_type",
+      cell: (product) => {
+        const sourceType = product.source_type || "central_stock";
+        return sourceType === "central_stock" ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400">
+            📦 Central Stock
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-400">
+            🏭 Unit Produced
+          </span>
+        );
+      },
     },
     {
       header: "Actions",
@@ -212,13 +237,34 @@ export default function ProductsPage() {
           <Skeleton className="h-20 w-full" />
         </div>
       ) : (
-        <DataTable
-          data={filteredProducts}
-          columns={columns}
-          searchPlaceholder="Search global catalog..."
-          searchQuery={searchQuery}
-          onSearch={setSearchQuery}
-        />
+        <>
+          {/* Source Type Filter */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex-1" />
+            <div className="w-48">
+              <select
+                value={sourceFilter}
+                onChange={(e) =>
+                  setSourceFilter(
+                    e.target.value as "all" | "central_stock" | "unit_produced",
+                  )
+                }
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                <option value="all">All Sources</option>
+                <option value="central_stock">📦 Central Stock</option>
+                <option value="unit_produced">🏭 Unit Produced</option>
+              </select>
+            </div>
+          </div>
+          <DataTable
+            data={filteredProducts}
+            columns={columns}
+            searchPlaceholder="Search global catalog..."
+            searchQuery={searchQuery}
+            onSearch={setSearchQuery}
+          />
+        </>
       )}
       <ProductModal
         isOpen={isDialogOpen}

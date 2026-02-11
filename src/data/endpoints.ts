@@ -23,4 +23,7 @@ export const API_ENDPOINTS = {
   FACILITY_TICKETS: "/facility-tickets",
   FACILITY_TICKETS_STATS: "/facility-tickets-stats",
   DAILY_REPORTS: "/daily-reports",
+  MENU: "/menu",
+  MENU_ORDER: "/menu/order",
+  CLAIM_SALE: "/sales", // Will be /sales/:invoice/claim
 } as const;

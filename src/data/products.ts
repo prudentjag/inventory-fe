@@ -11,7 +11,7 @@ export interface UpdateProductPayload {
 export const createProduct = async (data: Partial<Product>) => {
   const response = await api.post<ApiResponse<Product>>(
     API_ENDPOINTS.PRODUCTS,
-    data
+    data,
   );
   return response.data;
 };
@@ -19,7 +19,7 @@ export const createProduct = async (data: Partial<Product>) => {
 export const updateProduct = async ({ id, data }: UpdateProductPayload) => {
   const response = await api.put<ApiResponse<Product>>(
     `${API_ENDPOINTS.PRODUCTS}/${id}`,
-    data
+    data,
   );
   return response.data;
 };
@@ -31,7 +31,7 @@ export const useProducts = () => {
     queryFn: async () => {
       try {
         const response = await api.get<ApiResponse<Product[]>>(
-          API_ENDPOINTS.PRODUCTS
+          API_ENDPOINTS.PRODUCTS,
         );
         return response.data.data || [];
       } catch (e) {
@@ -66,7 +66,7 @@ export const useUpdateProduct = () => {
 
 export const deleteProduct = async (id: number | string) => {
   const response = await api.delete<ApiResponse<void>>(
-    `${API_ENDPOINTS.PRODUCTS}/${id}`
+    `${API_ENDPOINTS.PRODUCTS}/${id}`,
   );
   return response.data;
 };
@@ -80,4 +80,12 @@ export const useDeleteProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
+};
+
+// Hook for fetching only unit-produced products (for UnitPOS)
+export const useUnitProducedProducts = () => {
+  const { data: products, ...rest } = useProducts();
+  const unitProducedProducts =
+    products?.filter((p) => p.source_type === "unit_produced") || [];
+  return { data: unitProducedProducts, ...rest };
 };

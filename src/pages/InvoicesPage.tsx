@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download,
   Eye,
@@ -9,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  Copy,
+  Utensils,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { Transaction, PaymentMethod, PaginationLink } from "../types";
@@ -20,6 +23,7 @@ import {
   useSales,
   useUnitSales,
   useMySales,
+  useClaimSale,
   type SaleFilters,
 } from "../data/sales";
 import { useUnits } from "../data/units";
@@ -30,6 +34,14 @@ export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode =
+    (searchParams.get("view") as "assigned" | "guest") || "assigned";
+
+  const setViewMode = (mode: "assigned" | "guest") => {
+    setSearchParams({ view: mode });
+  };
 
   // Filters
   const [startDate, setStartDate] = useState("");
@@ -44,32 +56,47 @@ export default function InvoicesPage() {
     // CRITICAL: Hardcode to pending for Invoices page
     payment_status: "pending",
     unit_id: selectedUnitId || undefined,
+    user_id: viewMode === "guest" ? "unassigned" : undefined,
     page: currentPage,
   };
 
   // Determine which hook to use based on role
   const isAdminOrStockist = ["admin", "stockist"].includes(user?.role || "");
   const isManagerOrUnitHead = ["manager", "unit_head"].includes(
-    user?.role || ""
+    user?.role || "",
   );
 
   const { data: units } = useUnits(isAdminOrStockist);
 
-  // Always call all hooks unconditionally - only one will be enabled at a time
-  const adminQuery = useSales(filters, { enabled: isAdminOrStockist });
-  const managerQuery = useUnitSales(user?.assigned_unit_id || "", filters, {
-    enabled: isManagerOrUnitHead,
-  });
-  const staffQuery = useMySales(filters, {
-    enabled: !isAdminOrStockist && !isManagerOrUnitHead,
+  // Determine the unit ID helper
+  const assignedUnitId = user?.assigned_unit_id || user?.units?.[0]?.id || "";
+
+  const unitToQuery = isAdminOrStockist ? selectedUnitId : assignedUnitId;
+
+  // Always use unit sales for guest mode to see unassigned orders
+  const showGuestMode = viewMode === "guest";
+
+  const adminQuery = useSales(filters, {
+    enabled: isAdminOrStockist && !showGuestMode,
   });
 
-  // Select the appropriate query based on role
-  const salesQuery = isAdminOrStockist
-    ? adminQuery
-    : isManagerOrUnitHead
-    ? managerQuery
-    : staffQuery;
+  const unitSalesQuery = useUnitSales(unitToQuery, filters, {
+    enabled: !!unitToQuery && (isManagerOrUnitHead || showGuestMode),
+  });
+
+  const staffQuery = useMySales(filters, {
+    enabled: !isAdminOrStockist && !isManagerOrUnitHead && !showGuestMode,
+  });
+
+  const { mutate: claimSale, isPending: isClaiming } = useClaimSale();
+
+  // Select the appropriate query based on role and mode
+  const salesQuery =
+    showGuestMode || isManagerOrUnitHead
+      ? unitSalesQuery
+      : isAdminOrStockist
+        ? adminQuery
+        : staffQuery;
 
   // Safely handle transactions array - API returns {status, message, data: Sale[]} or {status, message, data: {data: Sale[]}}
   const rawData = salesQuery.data;
@@ -139,7 +166,7 @@ export default function InvoicesPage() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       t.staff_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Helper to get staff name
@@ -233,20 +260,36 @@ export default function InvoicesPage() {
       header: "Actions",
       className: "text-right",
       headerClassName: "text-right",
-      cell: (txn) => (
-        <div className="flex justify-end">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedTxn(txn);
-            }}
-            className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-            title="View Invoice"
-          >
-            <Eye size={16} />
-          </button>
-        </div>
-      ),
+      cell: (txn) => {
+        const isGuest = !txn.user_id && !txn.staff_name;
+
+        return (
+          <div className="flex justify-end gap-2">
+            {isGuest && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  claimSale(txn.invoice_number || "");
+                }}
+                disabled={isClaiming}
+                className="px-3 py-1 bg-primary text-primary-foreground rounded text-xs font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {isClaiming ? "Claiming..." : "Claim"}
+              </button>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTxn(txn);
+              }}
+              className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+              title="View Invoice"
+            >
+              <Eye size={16} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -346,6 +389,35 @@ export default function InvoicesPage() {
         )}
       </div>
 
+      <div className="flex items-center gap-1 border-b border-border mb-2">
+        <button
+          onClick={() => setViewMode("assigned")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            viewMode === "assigned"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Assigned Invoices
+        </button>
+        <button
+          onClick={() => setViewMode("guest")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+            viewMode === "guest"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Utensils size={14} />
+          Guest Orders
+          <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-[10px] font-bold">
+            UNASSIGNED
+          </span>
+        </button>
+      </div>
+
       <DataTable
         data={filteredTxns}
         columns={columns}
@@ -382,7 +454,7 @@ export default function InvoicesPage() {
                       "min-w-[32px] h-8 px-2 rounded-md text-sm font-medium transition-colors",
                       link.active
                         ? "bg-primary text-primary-foreground"
-                        : "border border-input bg-background hover:bg-accent"
+                        : "border border-input bg-background hover:bg-accent",
                     )}
                   >
                     {link.page}
@@ -418,6 +490,16 @@ export default function InvoicesPage() {
                     <span className="text-sm font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
                       {selectedTxn.invoice_number ||
                         selectedTxn.id.toString().toUpperCase()}
+
+                      <Copy
+                        className="text-green-500"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            selectedTxn.invoice_number ||
+                              selectedTxn.id.toString().toUpperCase(),
+                          )
+                        }
+                      />
                     </span>
                   </Dialog.Title>
                   <p className="text-sm text-muted-foreground">
@@ -437,8 +519,8 @@ export default function InvoicesPage() {
                         {selectedTxn.payment_method === "cash"
                           ? "Cash Payment"
                           : selectedTxn.payment_method === "pos"
-                          ? "POS Payment"
-                          : "Bank Transfer"}
+                            ? "POS Payment"
+                            : "Bank Transfer"}
                       </div>
                     </div>
                     <div>

@@ -73,9 +73,12 @@ export default function LandingPage() {
                   className="group-hover:translate-x-1 transition-transform"
                 />
               </Link>
-              <button className="w-full sm:w-auto px-8 py-4 rounded-full border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 font-semibold transition-all backdrop-blur-sm shadow-lg">
-                Watch Demo
-              </button>
+              <Link
+                to="/menu"
+                className="w-full sm:w-auto px-8 py-4 rounded-full border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 font-semibold transition-all backdrop-blur-sm shadow-lg flex items-center justify-center gap-2"
+              >
+                View Our Menu
+              </Link>
             </div>
           </div>
         </section>

@@ -10,7 +10,7 @@ import {
 import { ArrowRight, ShoppingCart, Package, Send } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "../components/ui/Skeleton";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useDashboardStats } from "../data/dashboard";
 import {
@@ -34,9 +34,12 @@ const SALES_DATA = [
 
 export default function DashboardOverview() {
   const { user } = useAuth();
-
   const { data: statsData, isLoading } = useDashboardStats();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+
+  if (user?.role === "server") {
+    return <Navigate to="/dashboard/transactions" replace />;
+  }
 
   const stats = statsData;
 

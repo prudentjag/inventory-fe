@@ -6,6 +6,7 @@ import {
   Banknote,
   CreditCard,
   Pause,
+  User as UserIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import type { CartItem } from "../../types";
@@ -22,6 +23,12 @@ interface PosCartProps {
   onSuspendOrder: () => void;
   suspendedCount: number;
   onViewSuspended: () => void;
+  serverId?: string | number;
+  onServerIdChange?: (id: string | number) => void;
+  servers?: { id: number; name: string }[];
+  activeInvoice?: any;
+  onCancelEdit?: () => void;
+  onPayLater?: () => void;
 }
 
 export function PosCart({
@@ -34,6 +41,12 @@ export function PosCart({
   onSuspendOrder,
   suspendedCount,
   onViewSuspended,
+  serverId,
+  onServerIdChange,
+  servers,
+  activeInvoice,
+  onCancelEdit,
+  onPayLater,
 }: PosCartProps) {
   // Generate stable order ID
   const orderId = useMemo(() => Math.floor(Math.random() * 10000), []);
@@ -73,6 +86,43 @@ export function PosCart({
           </button>
         </div>
       </div>
+
+      {activeInvoice && (
+        <div className="px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-primary font-medium text-sm">
+            <span className="animate-pulse w-2 h-2 rounded-full bg-primary" />
+            Editing Invoice #{activeInvoice.invoice_number}
+          </div>
+          <button
+            onClick={onCancelEdit}
+            className="text-xs text-primary underline font-bold"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Server Selection */}
+      {servers && servers.length > 0 && (
+        <div className="px-4 py-3 bg-muted/30 border-b border-border space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <UserIcon size={12} />
+            Attribute Sale To (Waiter/Server)
+          </label>
+          <select
+            value={serverId || ""}
+            onChange={(e) => onServerIdChange?.(e.target.value)}
+            className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Default (Me)</option>
+            {servers.map((server) => (
+              <option key={server.id} value={server.id}>
+                {server.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Cart Items */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -190,13 +240,26 @@ export function PosCart({
           </button>
         </div>
 
-        <button
-          onClick={onCheckout}
-          disabled={cart.length === 0}
-          className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-        >
-          Complete Order
-        </button>
+        <div className="grid grid-cols-1 gap-2">
+          {!activeInvoice && (
+            <button
+              onClick={onPayLater}
+              disabled={cart.length === 0}
+              className="w-full py-2 bg-secondary text-secondary-foreground font-semibold rounded-lg hover:bg-secondary/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border"
+            >
+              <Pause size={16} />
+              Pay Later (Generate Bill)
+            </button>
+          )}
+
+          <button
+            onClick={onCheckout}
+            disabled={cart.length === 0}
+            className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          >
+            {activeInvoice ? "Save Changes" : "Complete Order"}
+          </button>
+        </div>
       </div>
     </div>
   );

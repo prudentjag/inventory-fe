@@ -20,6 +20,8 @@ import {
   X,
   BarChart2,
   ClipboardCheck,
+  Factory,
+  Utensils,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -88,9 +90,16 @@ export default function DashboardLayout() {
             onClick={closeMobileMenu}
           />
           <NavItem
+            to="/dashboard/unit-pos"
+            icon={<Factory size={20} />}
+            label="Unit POS"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          />
+          <NavItem
             to="/dashboard/transactions"
             icon={<CreditCard size={20} />}
-            label="Transactions"
+            label={user?.role === "server" ? "My Sales" : "Transactions"}
             isOpen={true}
             onClick={closeMobileMenu}
           />
@@ -100,6 +109,21 @@ export default function DashboardLayout() {
             label="Invoices"
             isOpen={true}
             onClick={closeMobileMenu}
+          />
+          {/* <NavItem
+            to="/dashboard/invoices?view=guest"
+            icon={<Users size={20} />}
+            label="Guest Orders"
+            isOpen={true}
+            onClick={closeMobileMenu}
+          /> */}
+          <NavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label="Public Menu"
+            isOpen={true}
+            onClick={closeMobileMenu}
+            external
           />
           <NavItem
             to="/dashboard/daily-reports"
@@ -251,9 +275,15 @@ export default function DashboardLayout() {
             isOpen={isSidebarOpen}
           />
           <NavItem
+            to="/dashboard/unit-pos"
+            icon={<Factory size={20} />}
+            label="Unit POS"
+            isOpen={isSidebarOpen}
+          />
+          <NavItem
             to="/dashboard/transactions"
             icon={<CreditCard size={20} />}
-            label="Transactions"
+            label={user?.role === "server" ? "My Sales" : "Transactions"}
             isOpen={isSidebarOpen}
           />
           <NavItem
@@ -261,6 +291,19 @@ export default function DashboardLayout() {
             icon={<FileText size={20} />}
             label="Invoices"
             isOpen={isSidebarOpen}
+          />
+          {/* <NavItem
+            to="/dashboard/invoices?view=guest"
+            icon={<Users size={20} />}
+            label="Guest Orders"
+            isOpen={isSidebarOpen}
+          /> */}
+          <NavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label="View Menu"
+            isOpen={isSidebarOpen}
+            external
           />
           <NavItem
             to="/dashboard/daily-reports"
@@ -343,15 +386,14 @@ export default function DashboardLayout() {
             </>
           )}
 
-          {user?.role === "admin" ||
-            (user?.role === "stockist" && (
-              <NavItem
-                to="/dashboard/settings"
-                icon={<Settings size={20} />}
-                label="Settings"
-                isOpen={isSidebarOpen}
-              />
-            ))}
+          {["admin", "stockist"].includes(user?.role || "") && (
+            <NavItem
+              to="/dashboard/settings"
+              icon={<Settings size={20} />}
+              label="Settings"
+              isOpen={isSidebarOpen}
+            />
+          )}
         </nav>
 
         <div className="p-4 border-t border-border">
@@ -434,6 +476,7 @@ function NavItem({
   isOpen,
   end,
   onClick,
+  external,
 }: {
   to: string;
   icon: React.ReactNode;
@@ -441,7 +484,32 @@ function NavItem({
   isOpen: boolean;
   end?: boolean;
   onClick?: () => void;
+  external?: boolean;
 }) {
+  const content = (
+    <>
+      <div className="relative">{icon}</div>
+      {isOpen && <span className="font-medium">{label}</span>}
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-md transition-all duration-200 group text-muted-foreground hover:bg-accent hover:text-foreground",
+          !isOpen && "justify-center",
+        )}
+      >
+        {content}
+      </a>
+    );
+  }
+
   return (
     <NavLink
       to={to}
@@ -457,8 +525,7 @@ function NavItem({
         )
       }
     >
-      <div className="relative">{icon}</div>
-      {isOpen && <span className="font-medium">{label}</span>}
+      {content}
     </NavLink>
   );
 }

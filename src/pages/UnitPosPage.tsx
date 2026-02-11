@@ -1,31 +1,26 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Loader2, Store, Search } from "lucide-react";
-import api from "../services/api";
-import { API_ENDPOINTS } from "../data/endpoints";
-import type {
-  Product,
-  CartItem,
-  Brand,
-  InventoryItem,
-  SuspendedOrder,
-} from "../types";
+import { Loader2, Store, Factory } from "lucide-react";
+import type { Product, CartItem, Brand, SuspendedOrder } from "../types";
 import { useCategories } from "../data/categories";
-import { useInventory } from "../data/inventory";
+import { useUnitProducedProducts } from "../data/products";
 import { useBrands } from "../data/brands";
 import { useAuth } from "../context/AuthContext";
-import { useUsers } from "../data/staff";
-import { PosProductGrid } from "../components/pos/PosProductGrid";
 import { PosCart } from "../components/pos/PosCart";
 import { PaymentModal } from "../components/pos/PaymentModal";
 import { InvoiceModal } from "../components/pos/InvoiceModal";
 import { SuspendedOrdersPanel } from "../components/pos/SuspendedOrdersPanel";
 import { useCreateSale, useAddItemsToSale, useMarkAsPaid } from "../data/sales";
+import { useUsers } from "../data/staff";
+import api from "../services/api";
+import { API_ENDPOINTS } from "../data/endpoints";
 import type { Sale, VirtualAccountDetails, ApiResponse } from "../types";
+import { cn } from "../lib/utils";
+import { Search, Plus } from "lucide-react";
 
-const SUSPENDED_ORDERS_KEY = "pos_suspended_orders";
+const SUSPENDED_ORDERS_KEY = "unit_pos_suspended_orders";
 
-export default function PosPage() {
+export default function UnitPosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -80,18 +75,16 @@ export default function PosPage() {
   const { user } = useAuth();
   const effectiveUnitId = user?.assigned_unit_id || user?.units?.[0]?.id;
 
-  // API Data
+  // API Data - Use unit-produced products instead of inventory
   const { data: categoriesData } = useCategories();
-  const { data: inventoryData, isLoading } = useInventory(
-    effectiveUnitId || undefined,
-  );
+  const { data: products = [], isLoading } = useUnitProducedProducts();
   const { data: brandsData } = useBrands();
   const { data: userData } = useUsers();
   const { mutate: createSale, isPending: isCreatingSale } = useCreateSale();
-  const { isPending: isMarkingPaid } = useMarkAsPaid();
-  const { isPending: isAddingItems } = useAddItemsToSale(
+  const { mutate: addItems, isPending: isAddingItems } = useAddItemsToSale(
     activeInvoice?.invoice_number || "",
   );
+  const { mutate: markAsPaid, isPending: isMarkingPaid } = useMarkAsPaid();
 
   const servers = useMemo(() => {
     return userData?.data?.filter((u) => u.role === "server") || [];
@@ -110,11 +103,9 @@ export default function PosPage() {
     return ["All", ...categoryNames];
   }, [categoriesData]);
 
-  // Products from unit inventory, with mapped category names
-  const products = useMemo(() => {
-    return (inventoryData?.data ?? []).map((item: InventoryItem) => {
-      const product = item.product;
-      // Map category_id to category name
+  // Products with mapped category names (no stock tracking needed)
+  const productsWithCategories = useMemo(() => {
+    return products.map((product: Product) => {
       const categoryObj = categoriesData?.find(
         (c) => c.id === product.category_id,
       );
@@ -125,14 +116,12 @@ export default function PosPage() {
           (typeof product.category === "object"
             ? product.category?.name
             : product.category),
-        stock_quantity: item.quantity, // Use unit-specific stock
-        total_items: item.total_items, // Total available items
       };
     });
-  }, [inventoryData, categoriesData]);
+  }, [products, categoriesData]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return productsWithCategories.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -140,7 +129,7 @@ export default function PosPage() {
         selectedCategory === "All" || product.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [products, searchQuery, selectedCategory]);
+  }, [productsWithCategories, searchQuery, selectedCategory]);
 
   const cartTotal = cart.reduce(
     (sum, item) =>
@@ -202,13 +191,11 @@ export default function PosPage() {
       const order = suspendedOrders.find((o) => o.id === orderId);
       if (!order) return;
 
-      // If there's currently items in cart, ask to suspend first
       if (cart.length > 0) {
         const confirmSwitch = window.confirm(
           "You have items in your current cart. Do you want to suspend them and resume the selected order?",
         );
         if (confirmSwitch) {
-          // Suspend current cart first
           const currentOrderToSuspend: SuspendedOrder = {
             id: `susp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             items: [...cart],
@@ -224,11 +211,9 @@ export default function PosPage() {
           return;
         }
       } else {
-        // Just remove the order being resumed
         setSuspendedOrders((prev) => prev.filter((o) => o.id !== orderId));
       }
 
-      // Restore the order to cart
       setCart(order.items);
       setIsSuspendedPanelOpen(false);
       toast.success("Order resumed. Continue checkout when ready.");
@@ -259,11 +244,6 @@ export default function PosPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const { mutate: addItems } = useAddItemsToSale(
-    activeInvoice?.invoice_number || "",
-  );
-  const { mutate: markAsPaid } = useMarkAsPaid();
-
   const handleCreateSale = (
     method?: "cash" | "transfer" | "pos" | "monnify",
     isPayLater = false,
@@ -288,7 +268,6 @@ export default function PosPage() {
           onSuccess: (response) => {
             if (response.data) {
               const sale = response.data;
-
               // If it's a "Pay Later" (isPayLater === true), we just refresh and close
               if (isPayLater) {
                 setCurrentOrder({
@@ -363,7 +342,6 @@ export default function PosPage() {
       },
       {
         onSuccess: (response) => {
-          // Handle nested response structure from Monnify
           const responseData = response.data as Sale & {
             sale?: Sale;
             account_details?: VirtualAccountDetails;
@@ -384,7 +362,6 @@ export default function PosPage() {
               !!(finalMethod === "monnify" && accountDetails) || isPayLater,
           });
 
-          // Show appropriate message
           if (isPayLater) {
             toast.success("Invoice generated for later payment.");
           } else if (isMonnifyPending) {
@@ -397,11 +374,8 @@ export default function PosPage() {
             );
           }
 
-          // Close payment, Open Invoice
           setIsPaymentModalOpen(false);
           setIsInvoiceModalOpen(true);
-
-          // Clear cart
           setCart([]);
         },
         onError: (
@@ -475,6 +449,12 @@ export default function PosPage() {
     }
   };
 
+  // Helper to get brand image for a product
+  const getBrandImage = (product: Product): string | null | undefined => {
+    if (!brandsMap || !product.brand_id) return null;
+    return brandsMap.get(product.brand_id)?.image;
+  };
+
   if (!effectiveUnitId) {
     return (
       <div className="h-[calc(100vh-8rem)] flex items-center justify-center p-6">
@@ -486,7 +466,7 @@ export default function PosPage() {
           <p className="text-muted-foreground">
             Your account is not currently assigned to any unit or location.
             Please contact your administrator to assign you to a unit to start
-            using the POS system.
+            using the Unit POS system.
           </p>
         </div>
       </div>
@@ -496,9 +476,9 @@ export default function PosPage() {
   if (isLoading) {
     return (
       <div className="h-[calc(100vh-8rem)] flex flex-col items-center justify-center gap-4">
-        <Loader2 size={40} className="animate-spin text-primary" />
+        <Loader2 size={40} className="animate-spin text-green-600" />
         <p className="text-muted-foreground font-medium animate-pulse">
-          Loading unit inventory...
+          Loading unit products...
         </p>
       </div>
     );
@@ -506,13 +486,17 @@ export default function PosPage() {
 
   return (
     <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] gap-6 animate-in fade-in duration-500">
-      <div className="flex-1 flex flex-col min-w-0 h-full">
-        {/* Header with Search and Product Grid */}
-        <div className="bg-card rounded-xl border border-border shadow-sm mb-6 overflow-hidden">
-          <div className="p-4 border-b border-border bg-muted/5 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Store size={20} className="text-primary" />
-              <h2 className="font-bold text-lg">Point of Sale</h2>
+      {/* Product Grid - Custom for Unit Products */}
+      <div className="flex-1 flex flex-col bg-card rounded-xl border border-green-200 dark:border-green-800 shadow-sm overflow-hidden">
+        {/* Header with green branding */}
+        <div className="p-4 border-b border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+              <Factory size={20} />
+              <h2 className="font-semibold">Unit Products POS</h2>
+              <span className="text-xs bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full">
+                🏭 Made On-Site
+              </span>
             </div>
 
             <div className="flex w-full md:w-auto items-center gap-2">
@@ -524,7 +508,7 @@ export default function PosPage() {
                 <input
                   type="text"
                   placeholder="Find Invoice #..."
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-input focus:ring-2 focus:ring-primary/20 outline-none text-sm transition-all"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-input focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm transition-all"
                   value={invoiceSearchQuery}
                   onChange={(e) => setInvoiceSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleInvoiceSearch()}
@@ -533,27 +517,136 @@ export default function PosPage() {
               <button
                 onClick={handleInvoiceSearch}
                 disabled={isSearchingInvoice}
-                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium border border-border disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium border border-green-700 disabled:opacity-50 flex items-center gap-2"
               >
                 {isSearchingInvoice ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <Search size={14} />
                 )}
-                <span className="hidden sm:inline">Search</span>
+                <span className="hidden sm:inline">Search Invoice</span>
               </button>
             </div>
           </div>
-          <PosProductGrid
-            products={filteredProducts}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onAddToCart={addToCart}
-            brandsMap={brandsMap}
-          />
+
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search unit products by name or SKU..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-background border border-input focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border",
+                  selectedCategory === cat
+                    ? "bg-green-600 text-white border-green-600"
+                    : "bg-background text-muted-foreground border-input hover:border-green-500/50 hover:text-foreground",
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 content-start">
+          {filteredProducts.map((product) => (
+            <button
+              key={product.id}
+              onClick={() => addToCart(product)}
+              className="flex flex-col text-left bg-background border border-border rounded-lg p-3 hover:border-green-500/50 hover:shadow-md transition-all group h-fit"
+            >
+              <div className="aspect-square bg-secondary/50 rounded-md mb-3 flex items-center justify-center text-muted-foreground overflow-hidden relative">
+                {(() => {
+                  const brandImage = getBrandImage(product);
+                  const brandName =
+                    typeof product.brand === "object"
+                      ? product.brand?.name
+                      : product.brand;
+                  const brandImageUrl =
+                    typeof product.brand === "object"
+                      ? product.brand?.image_url
+                      : null;
+                  if (brandImage) {
+                    return (
+                      <img
+                        src={brandImage}
+                        alt={brandName || product.name}
+                        className="w-full h-full object-contain p-2"
+                      />
+                    );
+                  }
+                  if (brandImageUrl) {
+                    return (
+                      <img
+                        src={brandImageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    );
+                  }
+                  return (
+                    <span className="text-xs font-medium">{product.sku}</span>
+                  );
+                })()}
+                <div className="absolute inset-0 bg-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Plus
+                    className="text-green-600 bg-background rounded-full p-1 shadow-sm"
+                    size={32}
+                  />
+                </div>
+              </div>
+              <h3
+                className="font-semibold text-sm truncate w-full"
+                title={product.name}
+              >
+                {product.name}
+              </h3>
+              {/* Unit Produced Badge - No stock tracking */}
+              <div className="mt-1">
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  🏭 Unit Produced
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-muted-foreground text-xs">
+                  {typeof product.brand === "object"
+                    ? product.brand?.name
+                    : product.brand}
+                </span>
+                <span className="font-bold text-green-600 text-sm">
+                  ₦
+                  {(
+                    product?.price ??
+                    product?.selling_price ??
+                    0
+                  ).toLocaleString()}
+                </span>
+              </div>
+            </button>
+          ))}
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full h-40 flex flex-col items-center justify-center text-muted-foreground">
+              <Factory size={32} className="mb-2 opacity-50" />
+              <p>No unit products found</p>
+              <p className="text-xs mt-1">
+                Add products with "Unit Produced" source type
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

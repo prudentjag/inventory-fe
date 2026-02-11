@@ -20,7 +20,8 @@ export function StaffModal({ isOpen, onClose, editingUser }: StaffModalProps) {
   const createStaffMutation = useCreateStaff();
   const updateUserMutation = useUpdateUser();
 
-  const unitOptions = units?.map((u) => ({ label: u.name, value: u.id })) || [];
+  const unitOptions =
+    units?.map((u) => ({ label: u.name, value: String(u.id) })) || [];
 
   const roleOptions = [
     { label: "Admin", value: "admin" },
@@ -28,6 +29,7 @@ export function StaffModal({ isOpen, onClose, editingUser }: StaffModalProps) {
     { label: "Staff", value: "staff" },
     { label: "Auditor", value: "auditor" },
     { label: "Stockist", value: "stockist" },
+    { label: "Server/Waiter", value: "server" },
   ];
 
   const validationSchema = Yup.object({
@@ -83,10 +85,10 @@ export function StaffModal({ isOpen, onClose, editingUser }: StaffModalProps) {
             },
             onError: (error: any) => {
               toast.error(
-                error.response?.data?.message || "Failed to update staff"
+                error.response?.data?.message || "Failed to update staff",
               );
             },
-          }
+          },
         );
       } else {
         createStaffMutation.mutate(
@@ -101,10 +103,10 @@ export function StaffModal({ isOpen, onClose, editingUser }: StaffModalProps) {
             },
             onError: (error: any) => {
               toast.error(
-                error.response?.data?.message || "Failed to create staff"
+                error.response?.data?.message || "Failed to create staff",
               );
             },
-          }
+          },
         );
       }
     },

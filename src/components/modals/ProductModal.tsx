@@ -8,7 +8,7 @@ import { CustomFormInput } from "../form/CustomFormInput";
 import { BarcodeScanner } from "../form/BarcodeScanner";
 import { useCreateProduct, useUpdateProduct } from "../../data/products";
 import { useBrands } from "../../data/brands";
-import type { Product } from "../../types";
+import type { Product, SourceType } from "../../types";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -54,6 +54,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           price: product.price ?? product.selling_price ?? 0,
           items_per_set: product.items_per_set ?? 12,
           product_type: product.product_type || "set",
+          source_type: product.source_type || "central_stock",
         }
       : {
           id: "",
@@ -70,6 +71,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           image_url: "",
           trackable: true,
           quantity: 1,
+          source_type: "central_stock",
         },
     enableReinitialize: true,
     validationSchema,
@@ -85,6 +87,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         unit_of_measurement: values.unit_of_measurement,
         trackable: true,
         product_type: values.product_type as any,
+        source_type: values.source_type as SourceType,
       };
 
       if (product) {
@@ -104,10 +107,20 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         );
       } else {
         createProductMutation.mutate(
-          { ...payload, quantity: Number(values.quantity) } as any,
+          {
+            ...payload,
+            quantity:
+              values.source_type === "central_stock"
+                ? Number(values.quantity)
+                : 0,
+          } as any,
           {
             onSuccess: () => {
-              toast.success("Product created successfully");
+              const message =
+                values.source_type === "unit_produced"
+                  ? "Unit-produced product created successfully"
+                  : "Product created and added to central stock";
+              toast.success(message);
               handleClose();
             },
             onError: (error: any) => {
@@ -219,13 +232,50 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   </p>
                 )}
               </div>
-              <CustomFormInput
-                name="quantity"
-                label="Stock Quantity"
-                type="number"
-                formik={formik}
-                placeholder="e.g. 100"
-              />
+              {formik.values.source_type === "central_stock" && (
+                <CustomFormInput
+                  name="quantity"
+                  label="Initial Stock Quantity"
+                  type="number"
+                  formik={formik}
+                  placeholder="e.g. 100"
+                />
+              )}
+            </div>
+
+            {/* Source Type Selector */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="source_type" className="text-sm font-medium">
+                  Product Source
+                </label>
+                <select
+                  id="source_type"
+                  name="source_type"
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background"
+                  value={formik.values.source_type}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                >
+                  <option value="central_stock">📦 Central Stock</option>
+                  <option value="unit_produced">🏭 Unit Produced</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {formik.values.source_type === "unit_produced"
+                    ? "Made/sourced at the unit (e.g., shawarma, popcorn)"
+                    : "Stored in central warehouse"}
+                </p>
+              </div>
+              {formik.values.source_type === "unit_produced" && (
+                <div className="flex items-center">
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <strong>ℹ️ Note:</strong> This product won't be added to
+                      central stock.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

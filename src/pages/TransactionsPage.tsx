@@ -9,6 +9,7 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type {
@@ -25,9 +26,11 @@ import {
   useSales,
   useUnitSales,
   useMySales,
+  useMarkAsPaid,
   type SaleFilters,
 } from "../data/sales";
 import { useUnits } from "../data/units";
+import { useUsers } from "../data/staff";
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -42,6 +45,7 @@ export default function TransactionsPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "">("");
   const [selectedUnitId, setSelectedUnitId] = useState<string | number>("");
+  const [selectedServerId, setSelectedServerId] = useState<string | number>("");
 
   const filters: SaleFilters = {
     start_date: startDate || undefined,
@@ -49,16 +53,19 @@ export default function TransactionsPage() {
     payment_method: (paymentMethod as PaymentMethod) || undefined,
     payment_status: (paymentStatus as PaymentStatus) || undefined,
     unit_id: selectedUnitId || undefined,
+    user_id: selectedServerId || undefined,
     page: currentPage,
   };
 
   // Determine which hook to use based on role
   const isAdminOrStockist = ["admin", "stockist"].includes(user?.role || "");
   const isManagerOrUnitHead = ["manager", "unit_head"].includes(
-    user?.role || ""
+    user?.role || "",
   );
 
   const { data: units } = useUnits(isAdminOrStockist);
+  const { data: userData } = useUsers();
+  const allUsers = userData?.data || [];
 
   // Always call all hooks unconditionally - only one will be enabled at a time
   const adminQuery = useSales(filters, { enabled: isAdminOrStockist });
@@ -73,8 +80,8 @@ export default function TransactionsPage() {
   const salesQuery = isAdminOrStockist
     ? adminQuery
     : isManagerOrUnitHead
-    ? managerQuery
-    : staffQuery;
+      ? managerQuery
+      : staffQuery;
 
   // Safely handle transactions array - API returns {status, message, data: Sale[]} or {status, message, data: {data: Sale[]}}
   const rawData = salesQuery.data;
@@ -139,14 +146,12 @@ export default function TransactionsPage() {
   // derived state
   const filteredTxns = transactions.filter(
     (t: Transaction) =>
-      (t.id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.invoice_number || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        t.staff_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      t.payment_status !== "pending" &&
-      t.status !== "pending"
+      t.id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.invoice_number || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      t.staff_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Helper to get status (backend uses payment_status, fallback to status)
@@ -156,20 +161,6 @@ export default function TransactionsPage() {
   // Helper to get staff name
   const getStaffName = (txn: Transaction) =>
     txn.staff_name || txn.user?.name || "Unknown";
-
-  // Helper to get items (backend uses sale_items)
-  const getItems = (txn: Transaction) => {
-    if (txn.sale_items && txn.sale_items.length > 0) {
-      return txn.sale_items.map((si) => ({
-        id: si.product_id,
-        name: si.product?.name || `Product #${si.product_id}`,
-        quantity: si.quantity,
-        price: Number(si.unit_price),
-        selling_price: Number(si.unit_price),
-      }));
-    }
-    return txn.items || [];
-  };
 
   // Helper to get total amount as number
   const getAmount = (txn: Transaction) => {
@@ -241,7 +232,7 @@ export default function TransactionsPage() {
               "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border",
               status === "completed" || status === "paid"
                 ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-100 dark:text-green-600 dark:border-green-200"
-                : "bg-yellow-100 text-yellow-700 border-yellow-200"
+                : "bg-yellow-100 text-yellow-700 border-yellow-200",
             )}
           >
             {status === "completed" || status === "paid" ? (
@@ -345,6 +336,7 @@ export default function TransactionsPage() {
               <option value="">All Statuses</option>
               <option value="paid">Paid</option>
               <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
             </select>
           </div>
           {isAdminOrStockist && (
@@ -366,12 +358,34 @@ export default function TransactionsPage() {
               </select>
             </div>
           )}
+          {(isAdminOrStockist || isManagerOrUnitHead) && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Server/Waiter
+              </label>
+              <select
+                value={selectedServerId}
+                onChange={(e) => setSelectedServerId(e.target.value)}
+                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">All Servers</option>
+                {allUsers
+                  ?.filter((u) => u.role === "server")
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
         </div>
         {(startDate ||
           endDate ||
           paymentMethod ||
           paymentStatus ||
-          selectedUnitId) && (
+          selectedUnitId ||
+          selectedServerId) && (
           <div className="flex justify-end pt-2">
             <button
               onClick={() => {
@@ -380,6 +394,7 @@ export default function TransactionsPage() {
                 setPaymentMethod("");
                 setPaymentStatus("");
                 setSelectedUnitId("");
+                setSelectedServerId("");
               }}
               className="text-xs text-primary hover:underline font-medium"
             >
@@ -425,7 +440,7 @@ export default function TransactionsPage() {
                       "min-w-[32px] h-8 px-2 rounded-md text-sm font-medium transition-colors",
                       link.active
                         ? "bg-primary text-primary-foreground"
-                        : "border border-input bg-background hover:bg-accent"
+                        : "border border-input bg-background hover:bg-accent",
                     )}
                   >
                     {link.page}
@@ -453,103 +468,152 @@ export default function TransactionsPage() {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity" />
           <Dialog.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 sm:rounded-lg">
-            {selectedTxn && (
-              <>
-                <div className="flex flex-col space-y-1.5">
-                  <Dialog.Title className="text-lg font-semibold leading-none tracking-tight flex justify-between items-center">
-                    <span>Transaction Details</span>
-                    <span className="text-sm font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
-                      {selectedTxn.id.toString().toUpperCase()}
-                    </span>
-                  </Dialog.Title>
-                  <p className="text-sm text-muted-foreground">
-                    Processed on{" "}
-                    {format(new Date(selectedTxn.created_at), "PPP at pp")}
-                  </p>
-                </div>
-
-                <div className="py-2 space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground block mb-1">
-                        Payment Method
-                      </span>
-                      <div className="flex items-center gap-2 font-medium">
-                        <CreditCard size={16} />
-                        {selectedTxn.payment_method === "cash"
-                          ? "Cash Payment"
-                          : selectedTxn.payment_method === "pos"
-                          ? "POS Payment"
-                          : "Bank Transfer"}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block mb-1">
-                        Processed By
-                      </span>
-                      <div className="font-medium">
-                        {getStaffName(selectedTxn)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border rounded-lg overflow-hidden">
-                    <div className="bg-muted/50 px-4 py-2 border-b text-xs font-semibold text-muted-foreground flex justify-between">
-                      <span>ITEM</span>
-                      <span>TOTAL</span>
-                    </div>
-                    <div className="divide-y max-h-40 overflow-y-auto">
-                      {getItems(selectedTxn).map((item, idx: number) => (
-                        <div
-                          key={idx}
-                          className="px-4 py-3 flex justify-between text-sm"
-                        >
-                          <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {item.quantity} x ₦
-                              {(
-                                item.price ??
-                                item.selling_price ??
-                                0
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className="font-medium">
-                            ₦
-                            {(
-                              (item.price ?? item.selling_price ?? 0) *
-                              item.quantity
-                            ).toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="bg-muted/20 px-4 py-3 border-t flex justify-between items-center">
-                      <span className="font-bold">Grand Total</span>
-                      <span className="font-bold text-lg">
-                        ₦{selectedTxn.total_amount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 mt-2">
-                  <button className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm font-medium">
-                    Print Receipt
-                  </button>
-                  <button
-                    onClick={() => setSelectedTxn(null)}
-                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
-            )}
+            <MarkAsPaidAction
+              txn={selectedTxn}
+              onClose={() => setSelectedTxn(null)}
+            />
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
     </div>
+  );
+}
+
+function MarkAsPaidAction({
+  txn,
+  onClose,
+}: {
+  txn: Transaction | null;
+  onClose: () => void;
+}) {
+  const { mutate: markAsPaid, isPending } = useMarkAsPaid();
+
+  if (!txn) return null;
+
+  const isPendingStatus =
+    txn.payment_status === "pending" || txn.status === "pending";
+
+  const handleMarkPaid = () => {
+    if (window.confirm("Are you sure you want to mark this invoice as PAID?")) {
+      markAsPaid(
+        {
+          invoiceNumber: txn.invoice_number || txn.id.toString(),
+          payment_method: txn.payment_method,
+        },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+        },
+      );
+    }
+  };
+
+  return (
+    <>
+      <div className="flex flex-col space-y-1.5">
+        <Dialog.Title className="text-lg font-semibold leading-none tracking-tight flex justify-between items-center">
+          <span>Transaction Details</span>
+          <span className="text-sm font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
+            {(txn.invoice_number || txn.id).toString().toUpperCase()}
+          </span>
+        </Dialog.Title>
+        <p className="text-sm text-muted-foreground">
+          Processed on {format(new Date(txn.created_at), "PPP at pp")}
+        </p>
+      </div>
+
+      <div className="py-2 space-y-4">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground block mb-1">
+              Payment Method
+            </span>
+            <div className="flex items-center gap-2 font-medium">
+              <CreditCard size={16} />
+              {txn.payment_method === "cash"
+                ? "Cash Payment"
+                : txn.payment_method === "pos"
+                  ? "POS Payment"
+                  : txn.payment_method === "monnify"
+                    ? "Monnify Transfer"
+                    : "Manual Transfer"}
+            </div>
+          </div>
+          <div>
+            <span className="text-muted-foreground block mb-1">
+              Processed By
+            </span>
+            <div className="font-medium">
+              {txn.staff_name || txn.user?.name || "Unknown"}
+            </div>
+          </div>
+        </div>
+
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-muted/50 px-4 py-2 border-b text-xs font-semibold text-muted-foreground flex justify-between">
+            <span>ITEM</span>
+            <span>TOTAL</span>
+          </div>
+          <div className="divide-y max-h-40 overflow-y-auto">
+            {(txn.sale_items || txn.items || []).map(
+              (item: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="px-4 py-3 flex justify-between text-sm"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {item.product?.name ||
+                        item.name ||
+                        `Product #${item.product_id}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.quantity} x ₦
+                      {(item.unit_price || item.price || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <span className="font-medium">
+                    ₦
+                    {(
+                      (item.unit_price || item.price || 0) * item.quantity
+                    ).toLocaleString()}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+          <div className="bg-muted/20 px-4 py-3 border-t flex justify-between items-center">
+            <span className="font-bold">Grand Total</span>
+            <span className="font-bold text-lg">
+              ₦{txn.total_amount.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 mt-2">
+        {isPendingStatus && (
+          <button
+            onClick={handleMarkPaid}
+            disabled={isPending}
+            className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+          >
+            {isPending ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <CheckCircle size={16} />
+            )}
+            Mark as Paid
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm font-medium"
+        >
+          Close
+        </button>
+      </div>
+    </>
   );
 }

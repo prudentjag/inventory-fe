@@ -1,4 +1,10 @@
-export type Role = "admin" | "stockist" | "manager" | "unit_head" | "staff";
+export type Role =
+  | "admin"
+  | "stockist"
+  | "manager"
+  | "unit_head"
+  | "staff"
+  | "server";
 
 export type AuditLogAction =
   | "stock_added"
@@ -50,6 +56,7 @@ export interface CreateStaffPayload {
 }
 
 export type ProductType = "set" | "individual";
+export type SourceType = "central_stock" | "unit_produced";
 
 export interface User {
   id: number;
@@ -85,6 +92,7 @@ export interface Product {
   trackable?: boolean;
   product_type?: ProductType;
   total_items?: number;
+  source_type?: SourceType;
 }
 
 export interface CartItem extends Product {
