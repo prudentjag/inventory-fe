@@ -32,7 +32,7 @@ export function PosProductGrid({
   console.log(products);
 
   return (
-    <div className="flex-1 flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Search & Filter Header */}
       <div className="p-4 border-b border-border space-y-4">
         <div className="relative">

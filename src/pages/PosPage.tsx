@@ -536,9 +536,9 @@ export default function PosPage() {
 
   return (
     <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] gap-6 animate-in fade-in duration-500">
-      <div className="flex-1 flex flex-col min-w-0 h-full">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header with Search and Product Grid */}
-        <div className="bg-card rounded-xl border border-border shadow-sm mb-6 overflow-hidden">
+        <div className="flex-1 flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border bg-muted/5 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-2">
               <Store size={20} className="text-primary" />
