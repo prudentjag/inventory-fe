@@ -33,13 +33,14 @@ export interface GuestOrderResponse {
   status: string;
 }
 
-export function useMenu() {
+export function useMenu(unitId: number | string) {
   return useQuery<MenuData>({
-    queryKey: ["menu"],
+    queryKey: ["menu", unitId],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.MENU);
+      const response = await api.get(`${API_ENDPOINTS.MENU}/${unitId}`);
       return response.data.data;
     },
+    enabled: !!unitId,
   });
 }
 
