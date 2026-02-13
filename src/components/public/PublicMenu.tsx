@@ -9,6 +9,8 @@ import {
   Loader2,
   CheckCircle2,
   Copy,
+  ShoppingBag,
+  X,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Product, CartItem } from "../../types";
@@ -40,6 +42,7 @@ export function PublicMenu({
   const [searchQuery, setSearchQuery] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [tableNumber, setTableNumber] = useState<string>(initialTableNumber);
+  const [isCartOpenMobile, setIsCartOpenMobile] = useState(false);
 
   // Sync initialTableNumber if it changes (e.g. from URL)
   useEffect(() => {
@@ -158,24 +161,28 @@ export function PublicMenu({
   }
 
   return (
-    <div className="flex h-screen bg-[#0A0A0A] text-[#E0E0E0] overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen bg-[#0A0A0A] text-[#E0E0E0] overflow-hidden relative">
       {/* Left Column: Product Selection */}
-      <div className="flex-1 flex flex-col min-w-0 border-r border-white/5 bg-[#121212]">
+      <div className="flex-1 flex flex-col min-w-0 border-r border-white/5 bg-[#121212] overflow-hidden">
         {/* Header */}
-        <header className="p-6 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500 overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <span className="font-black text-white italic text-2xl">NB</span>
+        <header className="p-4 md:p-6 border-b border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between bg-black/20 backdrop-blur-md">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-blue-500 overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+              <span className="font-black text-white italic text-xl md:text-2xl">
+                NB
+              </span>
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tighter">Naveda</h1>
-              <div className="flex items-center gap-2 text-white uppercase font-black text-[9px] tracking-[0.2em] mt-0.5">
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter">
+                Naveda
+              </h1>
+              <div className="flex items-center gap-2 text-white uppercase font-black text-[8px] md:text-[9px] tracking-[0.2em] mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
                 Live Ordering
               </div>
             </div>
           </div>
-          <div className="relative w-72">
+          <div className="relative w-full md:w-72">
             <Search
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20"
               size={18}
@@ -191,13 +198,13 @@ export function PublicMenu({
         </header>
 
         {/* Categories */}
-        <div className="p-6 pb-2 overflow-x-auto flex gap-2 no-scrollbar bg-black/5">
+        <div className="p-4 md:p-6 pb-2 overflow-x-auto flex gap-2 no-scrollbar bg-black/5">
           {displayCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                "px-6 py-3 rounded-2xl whitespace-nowrap text-xs font-black uppercase tracking-widest transition-all",
+                "px-4 md:px-6 py-2.5 md:py-3 rounded-2xl whitespace-nowrap text-[10px] md:text-xs font-black uppercase tracking-widest transition-all",
                 selectedCategory === cat
                   ? "bg-white text-black shadow-2xl scale-105"
                   : "bg-white/5 text-white/40 hover:text-white border border-white/5",
@@ -209,15 +216,15 @@ export function PublicMenu({
         </div>
 
         {/* Product Grid */}
-        <main className="flex-1 p-6 overflow-y-auto no-scrollbar">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-4">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto no-scrollbar pb-32 lg:pb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-3 md:gap-4">
             {filteredProducts.map((product: Product) => (
               <button
                 key={product.id}
                 onClick={() => onAddToCart(product)}
-                className="group relative flex flex-col bg-[#1E1E1E] rounded-3xl p-3 border border-white/5 hover:border-blue-500/50 transition-all hover:scale-[1.02] active:scale-95 text-left"
+                className="group relative flex flex-col bg-[#1E1E1E] rounded-2xl md:rounded-3xl p-2 md:p-3 border border-white/5 hover:border-blue-500/50 transition-all hover:scale-[1.02] active:scale-95 text-left"
               >
-                <div className="aspect-square w-full rounded-2xl bg-[#2A2A2A] overflow-hidden mb-3 border border-white/5">
+                <div className="aspect-square w-full rounded-xl md:rounded-2xl bg-[#2A2A2A] overflow-hidden mb-2 md:mb-3 border border-white/5">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
@@ -225,15 +232,15 @@ export function PublicMenu({
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/5 font-black text-3xl italic">
+                    <div className="w-full h-full flex items-center justify-center text-white/5 font-black text-2xl md:text-3xl italic">
                       {product.name.charAt(0)}
                     </div>
                   )}
                 </div>
-                <h3 className="font-bold text-[13px] leading-tight mb-1 group-hover:text-blue-500 transition-colors line-clamp-1 uppercase">
+                <h3 className="font-bold text-[11px] md:text-[13px] leading-tight mb-1 group-hover:text-blue-500 transition-colors line-clamp-2 uppercase">
                   {product.name}
                 </h3>
-                <span className="font-black text-sm text-white/50">
+                <span className="font-black text-[12px] md:text-sm text-white/50">
                   ₦
                   {(
                     product.price ||
@@ -241,26 +248,49 @@ export function PublicMenu({
                     0
                   ).toLocaleString()}
                 </span>
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-8 h-8 rounded-full bg-blue-500 text-black flex items-center justify-center shadow-2xl">
-                    <Plus size={18} />
+                <div className="absolute top-3 right-3 md:top-4 md:right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-500 text-black flex items-center justify-center shadow-2xl">
+                    <Plus size={16} />
                   </div>
                 </div>
               </button>
             ))}
           </div>
           {filteredProducts.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-32 text-white/5">
-              <Utensils size={80} className="mb-4 opacity-10" />
+            <div className="flex flex-col items-center justify-center py-20 text-white/5">
+              <Utensils size={60} className="mb-4 opacity-10" />
               <p className="text-lg font-bold">No items found</p>
             </div>
           )}
         </main>
       </div>
 
-      {/* Right Column: Order Summary */}
-      <div className="w-[400px] flex-shrink-0 flex flex-col bg-black/40 shadow-2xl z-10">
-        <div className="p-8 pb-4 border-b border-white/5">
+      {/* Floating View Order Button for Mobile */}
+      {cart.length > 0 && !isCartOpenMobile && (
+        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <button
+            onClick={() => setIsCartOpenMobile(true)}
+            className="bg-blue-500 text-black font-black px-8 py-4 rounded-full flex items-center gap-3 shadow-2xl shadow-blue-500/40"
+          >
+            <ShoppingBag size={20} />
+            <span className="uppercase tracking-widest text-sm">
+              View Order ({cart.length})
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Right Column: Order Summary (Sidebar on Desktop, Overlay on Mobile) */}
+      <div
+        className={cn(
+          "w-full lg:w-[400px] flex-shrink-0 flex flex-col bg-[#0A0A0A]/95 lg:bg-black/40 shadow-2xl lg:z-10 transition-all duration-300",
+          "fixed inset-0 z-50 lg:relative lg:inset-auto",
+          isCartOpenMobile
+            ? "translate-x-0"
+            : "translate-x-full lg:translate-x-0",
+        )}
+      >
+        <div className="p-6 md:p-8 pb-4 border-b border-white/5 flex items-center justify-between">
           <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-3">
             Current Order
             {cart.length > 0 && (
@@ -269,6 +299,13 @@ export function PublicMenu({
               </span>
             )}
           </h2>
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setIsCartOpenMobile(false)}
+            className="lg:hidden p-2 rounded-xl bg-white/5 text-white/40"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Order Items */}
