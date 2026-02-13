@@ -10,8 +10,7 @@ export default function MenuPage() {
   const [searchParams] = useSearchParams();
   const tableParam = searchParams.get("table") || "";
 
-  const unitId = 1; // Default unit
-  const { data, isLoading } = useMenu(unitId);
+  const { data, isLoading } = useMenu();
   const products = data?.menu || [];
   const categories = Array.from(new Set(products.map((p) => p.category))).map(
     (name) => ({ id: name, name }),
