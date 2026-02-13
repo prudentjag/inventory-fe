@@ -12,6 +12,7 @@ import type {
 } from "../types";
 import { useCategories } from "../data/categories";
 import { useInventory } from "../data/inventory";
+import { useProducts } from "../data/products";
 import { useBrands } from "../data/brands";
 import { useAuth } from "../context/AuthContext";
 import { useUsers } from "../data/staff";
@@ -82,9 +83,12 @@ export default function PosPage() {
 
   // API Data
   const { data: categoriesData } = useCategories();
-  const { data: inventoryData, isLoading } = useInventory(
+  const { data: inventoryData, isLoading: isInventoryLoading } = useInventory(
     effectiveUnitId || undefined,
   );
+  const { data: allProducts = [], isLoading: isProductsLoading } =
+    useProducts();
+  const isLoading = isInventoryLoading || isProductsLoading;
   const { data: brandsData } = useBrands();
   const { data: userData } = useUsers();
   const { mutate: createSale, isPending: isCreatingSale } = useCreateSale();
@@ -110,26 +114,52 @@ export default function PosPage() {
     return ["All", ...categoryNames];
   }, [categoriesData]);
 
-  // Products from unit inventory, with mapped category names
+  // Products from unit inventory + unit_processed items
   const products = useMemo(() => {
-    return (inventoryData?.data ?? []).map((item: InventoryItem) => {
-      const product = item.product;
-      // Map category_id to category name
-      const categoryObj = categoriesData?.find(
-        (c) => c.id === product.category_id,
-      );
-      return {
-        ...product,
-        category:
-          categoryObj?.name ??
-          (typeof product.category === "object"
-            ? product.category?.name
-            : product.category),
-        stock_quantity: item.quantity, // Use unit-specific stock
-        total_items: item.total_items, // Total available items
-      };
-    });
-  }, [inventoryData, categoriesData]);
+    // 1. Map inventory items (central_stock)
+    const inventoryProducts = (inventoryData?.data ?? []).map(
+      (item: InventoryItem) => {
+        const product = item.product;
+        const categoryObj = categoriesData?.find(
+          (c) => c.id === product.category_id,
+        );
+        return {
+          ...product,
+          category:
+            categoryObj?.name ??
+            (typeof product.category === "object"
+              ? product.category?.name
+              : product.category),
+          stock_quantity: item.quantity,
+          total_items: item.total_items,
+        };
+      },
+    );
+
+    // 2. Map unit_processed items from global list (on-demand)
+    const processedProducts = allProducts
+      .filter((p: Product) => p.source_type === "unit_processed")
+      // Avoid duplicates if already in inventory (though unlikely for unit_processed)
+      .filter((p: Product) => !inventoryProducts.some((ip) => ip.id === p.id))
+      .map((product: Product) => {
+        const categoryObj = categoriesData?.find(
+          (c) => c.id === product.category_id,
+        );
+        return {
+          ...product,
+          category:
+            categoryObj?.name ??
+            (typeof product.category === "object"
+              ? product.category?.name
+              : product.category),
+          // Unit processed items are on-demand, so they don't have stock limits in POS
+          stock_quantity: 999,
+          total_items: 999,
+        };
+      });
+
+    return [...inventoryProducts, ...processedProducts];
+  }, [inventoryData, allProducts, categoriesData]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {

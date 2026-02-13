@@ -22,6 +22,7 @@ import { StockInsightsPage } from "./pages/StockInsightsPage";
 import DailyReportsPage from "./pages/DailyReportsPage";
 import UnitPosPage from "./pages/UnitPosPage";
 import MenuPage from "./pages/MenuPage";
+import QrCodePage from "./pages/QrCodePage";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ export default function App() {
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="facilities" element={<FacilitiesPage />} />
               <Route path="bookings" element={<BookingsPage />} />
+              <Route path="qr-generator" element={<QrCodePage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PublicMenu } from "../components/public/PublicMenu";
 import { useMenu } from "../data/menu";
 import { Loader2 } from "lucide-react";
@@ -6,6 +7,9 @@ import type { Product, CartItem } from "../types";
 import { toast } from "sonner";
 
 export default function MenuPage() {
+  const [searchParams] = useSearchParams();
+  const tableParam = searchParams.get("table") || "";
+
   const unitId = 1; // Default unit
   const { data, isLoading } = useMenu(unitId);
   const products = data?.menu || [];
@@ -76,6 +80,7 @@ export default function MenuPage() {
         onRemoveItem={handleRemoveItem}
         onAddToCart={handleAddToCart}
         onClearCart={handleClearCart}
+        initialTableNumber={tableParam}
       />
     </div>
   );

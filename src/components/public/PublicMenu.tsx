@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -23,6 +23,7 @@ interface PublicMenuProps {
   onRemoveItem: (id: string | number) => void;
   onAddToCart: (product: any) => void;
   onClearCart: () => void;
+  initialTableNumber?: string;
 }
 
 export function PublicMenu({
@@ -33,11 +34,19 @@ export function PublicMenu({
   onRemoveItem,
   onAddToCart,
   onClearCart,
+  initialTableNumber = "",
 }: PublicMenuProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [tableNumber, setTableNumber] = useState<string>("");
+  const [tableNumber, setTableNumber] = useState<string>(initialTableNumber);
+
+  // Sync initialTableNumber if it changes (e.g. from URL)
+  useEffect(() => {
+    if (initialTableNumber) {
+      setTableNumber(initialTableNumber);
+    }
+  }, [initialTableNumber]);
   const [orderSuccess, setOrderSuccess] = useState<{
     invoice_number: string;
   } | null>(null);
@@ -159,9 +168,7 @@ export function PublicMenu({
               <span className="font-black text-white italic text-2xl">NB</span>
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tighter">
-                Naveda
-              </h1>
+              <h1 className="text-2xl font-black tracking-tighter">Naveda</h1>
               <div className="flex items-center gap-2 text-white uppercase font-black text-[9px] tracking-[0.2em] mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
                 Live Ordering

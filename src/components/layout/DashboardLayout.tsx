@@ -22,6 +22,7 @@ import {
   ClipboardCheck,
   Factory,
   Utensils,
+  QrCode,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
@@ -134,13 +135,22 @@ export default function DashboardLayout() {
           />
 
           {["admin", "stockist"].includes(user?.role || "") && (
-            <NavItem
-              to="/dashboard/central-stock"
-              icon={<Warehouse size={20} />}
-              label="Central Stock"
-              isOpen={true}
-              onClick={closeMobileMenu}
-            />
+            <>
+              <NavItem
+                to="/dashboard/central-stock"
+                icon={<Warehouse size={20} />}
+                label="Central Stock"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+              <NavItem
+                to="/dashboard/qr-generator"
+                icon={<QrCode size={20} />}
+                label="QR Generator"
+                isOpen={true}
+                onClick={closeMobileMenu}
+              />
+            </>
           )}
           {["admin", "stockist"].includes(user?.role || "") && (
             <NavItem
@@ -319,6 +329,12 @@ export default function DashboardLayout() {
                 to="/dashboard/central-stock"
                 icon={<Warehouse size={20} />}
                 label="Central Stock"
+                isOpen={isSidebarOpen}
+              />
+              <NavItem
+                to="/dashboard/qr-generator"
+                icon={<QrCode size={20} />}
+                label="QR Generator"
                 isOpen={isSidebarOpen}
               />
               <NavItem

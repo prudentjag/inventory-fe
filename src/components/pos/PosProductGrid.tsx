@@ -121,25 +121,31 @@ export function PosProductGrid({
             >
               {product.name}
             </h3>
-            {/* Stock Quantity Badge */}
-            {product.total_items !== undefined && (
-              <div className="mt-1">
-                <span
-                  className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                    product.total_items === 0
-                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      : product.total_items <= 5
-                        ? "bg-amber-100 text-amber-700 dark:bg-black dark:text-amber-400"
-                        : "bg-green-100 text-green-700 dark:bg-black dark:text-green-400",
-                  )}
-                >
-                  {product.total_items === 0
-                    ? "Out of Stock"
-                    : `${product.total_items} in stock`}
+            {/* Stock Quantity or Source Badge */}
+            <div className="mt-1 flex flex-wrap gap-1">
+              {product.source_type === "unit_processed" ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  ⚙️ Unit Processed
                 </span>
-              </div>
-            )}
+              ) : (
+                product.total_items !== undefined && (
+                  <span
+                    className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                      product.total_items === 0
+                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : product.total_items <= 5
+                          ? "bg-amber-100 text-amber-700 dark:bg-black dark:text-amber-400"
+                          : "bg-green-100 text-green-700 dark:bg-black dark:text-green-400",
+                    )}
+                  >
+                    {product.total_items === 0
+                      ? "Out of Stock"
+                      : `${product.total_items} in stock`}
+                  </span>
+                )
+              )}
+            </div>
             <div className="flex items-center justify-between mt-1">
               <span className="text-muted-foreground text-xs">
                 {typeof product.brand === "object"
