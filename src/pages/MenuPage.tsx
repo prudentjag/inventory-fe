@@ -62,7 +62,7 @@ export default function MenuPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#121212] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="animate-spin text-amber-500" size={40} />
+        <Loader2 className="animate-spin text-blue-800" size={40} />
         <p className="text-white/40 font-medium">
           Loading delicious options...
         </p>
