@@ -78,6 +78,7 @@ export interface Product {
   sku: string;
   barcode?: string;
   size?: string;
+  image?: string;
   items_per_set?: number; // Number of items in each set (e.g., 12 bottles per carton)
   brand?: string | Brand; // Can be string or nested Brand object from API
   brand_id?: number;
