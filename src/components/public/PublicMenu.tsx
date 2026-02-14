@@ -198,7 +198,7 @@ export function PublicMenu({
         </header>
 
         {/* Categories */}
-        <div className="p-4 md:p-6 pb-2 overflow-x-auto flex gap-2 no-scrollbar bg-black/5">
+        <div className="p-4 md:p-6 pb-2 flex flex-wrap gap-2 bg-black/5">
           {displayCategories.map((cat) => (
             <button
               key={cat}
