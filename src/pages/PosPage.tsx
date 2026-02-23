@@ -12,7 +12,6 @@ import type {
 import { useCategories } from "../data/categories";
 import { useInventory } from "../data/inventory";
 import { useProducts } from "../data/products";
-import { useBrands } from "../data/brands";
 import { useAuth } from "../context/AuthContext";
 import { useUsers } from "../data/staff";
 import { PosProductGrid } from "../components/pos/PosProductGrid";
