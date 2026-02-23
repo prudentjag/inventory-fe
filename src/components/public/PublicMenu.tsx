@@ -41,6 +41,8 @@ export function PublicMenu({
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [tableNumber, setTableNumber] = useState<string>(initialTableNumber);
   const [isCartOpenMobile, setIsCartOpenMobile] = useState(false);
 
@@ -83,8 +85,12 @@ export function PublicMenu({
       toast.error("Your cart is empty");
       return;
     }
-    if (!customerName.trim()) {
-      toast.error("Please enter your name");
+    if (!customerEmail.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      toast.error("Please enter your phone number");
       return;
     }
     if (!tableNumber) {
@@ -95,7 +101,10 @@ export function PublicMenu({
     placeOrder(
       {
         unit_id: 1,
-        customer_name: `${customerName} (Table ${tableNumber})`,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        phone_number: phoneNumber,
+        table_number: `Table ${tableNumber}`,
         items: cart.map((item) => ({
           product_id: Number(item.id),
           quantity: item.quantity,
@@ -107,6 +116,8 @@ export function PublicMenu({
           setOrderSuccess(data);
           onClearCart();
           setCustomerName("");
+          setCustomerEmail("");
+          setPhoneNumber("");
           setTableNumber("");
         },
         onError: (error: any) => {
@@ -403,6 +414,33 @@ export function PublicMenu({
                 placeholder="Required"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full bg-black border border-white/5 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-white/10"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em] ml-1">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="Required"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="w-full bg-black border border-white/5 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-white/10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em] ml-1">
+                Phone
+              </label>
+              <input
+                type="tel"
+                placeholder="Required"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 className="w-full bg-black border border-white/5 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-white/10"
               />
             </div>

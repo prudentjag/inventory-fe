@@ -24,7 +24,10 @@ export interface GuestOrderPayload {
     product_id: number;
     quantity: number;
   }[];
-  customer_name?: string;
+  customer_name: string;
+  customer_email: string;
+  phone_number: string;
+  table_number: string;
 }
 
 export interface GuestOrderResponse {
