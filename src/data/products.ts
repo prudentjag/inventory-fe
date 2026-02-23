@@ -8,15 +8,42 @@ export interface UpdateProductPayload {
   data: Partial<Product>;
 }
 
-export const createProduct = async (data: Partial<Product>) => {
+export const createProduct = async (data: Partial<Product> | FormData) => {
+  const isFormData = data instanceof FormData;
   const response = await api.post<ApiResponse<Product>>(
     API_ENDPOINTS.PRODUCTS,
     data,
+    {
+      headers: isFormData ? { "Content-Type": "multipart/form-data" } : {},
+    },
   );
   return response.data;
 };
 
-export const updateProduct = async ({ id, data }: UpdateProductPayload) => {
+export const updateProduct = async ({
+  id,
+  data,
+}: {
+  id: number | string;
+  data: Partial<Product> | FormData;
+}) => {
+  const isFormData = data instanceof FormData;
+
+  // Laravel PUT workaround for multipart/form-data
+  if (isFormData) {
+    if (!data.has("_method")) {
+      data.append("_method", "PUT");
+    }
+    const response = await api.post<ApiResponse<Product>>(
+      `${API_ENDPOINTS.PRODUCTS}/${id}`,
+      data,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data;
+  }
+
   const response = await api.put<ApiResponse<Product>>(
     `${API_ENDPOINTS.PRODUCTS}/${id}`,
     data,

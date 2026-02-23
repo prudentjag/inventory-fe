@@ -6,7 +6,6 @@ import { API_ENDPOINTS } from "../data/endpoints";
 import type {
   Product,
   CartItem,
-  Brand,
   InventoryItem,
   SuspendedOrder,
 } from "../types";
@@ -89,7 +88,6 @@ export default function PosPage() {
   const { data: allProducts = [], isLoading: isProductsLoading } =
     useProducts();
   const isLoading = isInventoryLoading || isProductsLoading;
-  const { data: brandsData } = useBrands();
   const { data: userData } = useUsers();
   const { mutate: createSale, isPending: isCreatingSale } = useCreateSale();
   const { isPending: isMarkingPaid } = useMarkAsPaid();
@@ -100,13 +98,6 @@ export default function PosPage() {
   const servers = useMemo(() => {
     return userData?.data?.filter((u) => u.role === "server") || [];
   }, [userData]);
-
-  // Build brand lookup map for efficient access
-  const brandsMap = useMemo(() => {
-    const map = new Map<number, Brand>();
-    brandsData?.forEach((brand) => map.set(brand.id, brand));
-    return map;
-  }, [brandsData]);
 
   // Categories with "All" prepended
   const categories = useMemo(() => {
@@ -582,7 +573,6 @@ export default function PosPage() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onAddToCart={addToCart}
-            brandsMap={brandsMap}
           />
         </div>
       </div>

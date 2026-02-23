@@ -8,7 +8,7 @@ import { CustomFormInput } from "../form/CustomFormInput";
 import { BarcodeScanner } from "../form/BarcodeScanner";
 import { useCreateProduct, useUpdateProduct } from "../../data/products";
 import { useBrands } from "../../data/brands";
-import type { Product, SourceType } from "../../types";
+import type { Product } from "../../types";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -18,6 +18,10 @@ interface ProductModalProps {
 
 export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   const [showScanner, setShowScanner] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    product?.image_url || null,
+  );
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
   const { data: brands = [] } = useBrands();
@@ -76,23 +80,29 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     enableReinitialize: true,
     validationSchema,
     onSubmit: async (values) => {
-      const payload = {
-        name: values.name,
-        sku: values.sku,
-        brand_id: Number(values.brand_id),
-        size: values.size,
-        items_per_set: Number(values.items_per_set) || 12,
-        selling_price: Number(values.price),
-        cost_price: Number(values.cost_price),
-        unit_of_measurement: values.unit_of_measurement,
-        trackable: true,
-        product_type: values.product_type as any,
-        source_type: values.source_type as SourceType,
-      };
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("sku", values.sku);
+      formData.append("brand_id", String(values.brand_id));
+      if (values.size) formData.append("size", values.size);
+      formData.append("items_per_set", String(values.items_per_set || 12));
+      formData.append("selling_price", String(values.price));
+      formData.append("cost_price", String(values.cost_price));
+      formData.append(
+        "unit_of_measurement",
+        values.unit_of_measurement || "bottle",
+      );
+      formData.append("trackable", "1");
+      formData.append("product_type", values.product_type);
+      formData.append("source_type", values.source_type);
+
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
 
       if (product) {
         updateProductMutation.mutate(
-          { id: product.id, data: payload },
+          { id: product.id, data: formData },
           {
             onSuccess: () => {
               toast.success("Product updated successfully");
@@ -106,38 +116,47 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           },
         );
       } else {
-        createProductMutation.mutate(
-          {
-            ...payload,
-            quantity:
-              values.source_type === "central_stock"
-                ? Number(values.quantity)
-                : 0,
-          } as any,
-          {
-            onSuccess: () => {
-              const message =
-                values.source_type === "unit_produced" ||
-                values.source_type === "unit_processed"
-                  ? "Unit-produced product created successfully"
-                  : "Product created and added to central stock";
-              toast.success(message);
-              handleClose();
-            },
-            onError: (error: any) => {
-              toast.error(
-                error.response?.data?.message || "Failed to create product",
-              );
-            },
+        const quantity =
+          values.source_type === "central_stock" ? Number(values.quantity) : 0;
+        formData.append("quantity", String(quantity));
+
+        createProductMutation.mutate(formData as any, {
+          onSuccess: () => {
+            const message =
+              values.source_type === "unit_produced" ||
+              values.source_type === "unit_processed"
+                ? "Unit-produced product created successfully"
+                : "Product created and added to central stock";
+            toast.success(message);
+            handleClose();
           },
-        );
+          onError: (error: any) => {
+            toast.error(
+              error.response?.data?.message || "Failed to create product",
+            );
+          },
+        });
       }
     },
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleClose = () => {
     onClose();
     formik.resetForm();
+    setSelectedFile(null);
+    setImagePreview(null);
   };
 
   return (
@@ -157,6 +176,52 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           </div>
 
           <form onSubmit={formik.handleSubmit} className="grid gap-6 py-4">
+            {/* Image Upload */}
+            <div className="flex flex-col items-center gap-4 p-4 border-2 border-dashed border-border rounded-lg bg-muted/5">
+              {imagePreview ? (
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-border shadow-sm group">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setImagePreview(product?.image_url || null);
+                    }}
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <div className="w-32 h-32 rounded-lg bg-secondary/50 flex flex-col items-center justify-center gap-2 border border-border text-muted-foreground group">
+                  <Camera size={32} />
+                  <span className="text-xs">No Image</span>
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-1">
+                <label
+                  htmlFor="image-upload"
+                  className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium cursor-pointer transition-colors"
+                >
+                  {imagePreview ? "Change Image" : "Upload Image"}
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  JPG, PNG or WEBP. Max 2MB.
+                </p>
+              </div>
+            </div>
+
             {/* Barcode Scanner */}
             {showScanner && (
               <BarcodeScanner
