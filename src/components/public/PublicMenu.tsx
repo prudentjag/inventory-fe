@@ -236,9 +236,9 @@ export function PublicMenu({
                 className="group relative flex flex-col bg-[#1E1E1E] rounded-2xl md:rounded-3xl p-2 md:p-3 border border-white/5 hover:border-blue-500/50 transition-all hover:scale-[1.02] active:scale-95 text-left"
               >
                 <div className="aspect-square w-full rounded-xl md:rounded-2xl bg-[#2A2A2A] overflow-hidden mb-2 md:mb-3 border border-white/5">
-                  {product.image || product.image_url ? (
+                  {product.image_url || product.image ? (
                     <img
-                      src={product.image || product.image_url}
+                      src={product.image_url || product.image}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
